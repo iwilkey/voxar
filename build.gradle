@@ -1,0 +1,47 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        gradlePluginPortal()
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+        google()
+    }
+}
+
+allprojects {
+    apply plugin: "eclipse"
+    version = 'master'
+    ext {
+        appName = "Voxar [DEBUG]"
+        gdxVersion = '1.10.0'
+    }
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        google()
+        gradlePluginPortal()
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+        maven { url "https://oss.sonatype.org/content/repositories/releases/" }
+        maven { url "https://jitpack.io" }
+    }
+}
+
+project(":desktop") {
+    apply plugin: "java-library"
+    dependencies {
+		implementation project(":core")
+		implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
+	    implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+	    implementation "com.badlogicgames.gdx:gdx-bullet-platform:$gdxVersion:natives-desktop"
+    }
+}
+
+project(":core") {
+    apply plugin: "java-library"
+    dependencies {
+		implementation "com.badlogicgames.gdx:gdx:$gdxVersion"
+	    implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
+	    implementation "com.badlogicgames.gdx:gdx-bullet:$gdxVersion"
+	    implementation "io.github.spair:imgui-java-app:1.86.4"
+    }
+}
