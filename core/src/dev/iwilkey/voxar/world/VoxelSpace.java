@@ -12,6 +12,7 @@ import dev.iwilkey.voxar.entity.VoxelEntity;
 import dev.iwilkey.voxar.entity.VoxelEntityManager;
 import dev.iwilkey.voxar.gfx.RenderResizable;
 import dev.iwilkey.voxar.gfx.VoxarRenderer;
+import dev.iwilkey.voxar.perspective.PerspectiveController;
 import dev.iwilkey.voxar.perspective.VoxelSpacePerspective;
 import dev.iwilkey.voxar.physics.PhysicsEngine;
 import dev.iwilkey.voxar.state.VoxarEngineState;
@@ -95,6 +96,14 @@ public final class VoxelSpace implements Disposable, Tickable, RenderResizable {
 		camera.viewportWidth = nw;
 		camera.viewportHeight = nh;
 		camera.update();
+	}
+	
+	/**
+	 * Set the controller for the VoxelSpacePerspective.
+	 * @param controller the controller.
+	 */
+	public void setPerspectiveController(PerspectiveController controller) {
+		camera.setController(controller);
 	}
 	
 	/**

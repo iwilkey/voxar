@@ -1,11 +1,9 @@
 package dev.iwilkey.voxar.input;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.math.Vector2;
 
 import dev.iwilkey.voxar.clock.Tickable;
-import dev.iwilkey.voxar.settings.VoxarKeyBindings;
 
 /**
  * An implementation of InputProcessor that gives common properties of GLFW input and high-level functions to utilize it. Statically
@@ -80,13 +78,13 @@ public final class StandardInput implements InputProcessor, Tickable {
 
 	@Override
 	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-		cursorState[pointer] = ACTIVATE;
+		cursorState[button] = ACTIVATE;
 		return false;
 	}
 
 	@Override
 	public boolean touchUp(int screenX, int screenY, int pointer, int button) {
-		cursorState[pointer] = DISABLE;
+		cursorState[button] = DISABLE;
 		return false;
 	}
 
@@ -179,11 +177,8 @@ public final class StandardInput implements InputProcessor, Tickable {
 
 	@Override
 	public void tick() {
-		if(keyJustDown(VoxarKeyBindings.EXIT_GAME)) 
-			Gdx.app.exit();
 		// Update the states of input data structures.
 		for(int i = 0; i < 256; i++) {
-			
 			// Handle keys.
 			switch(keyState[i]) {
 				case DISABLE:
@@ -193,7 +188,6 @@ public final class StandardInput implements InputProcessor, Tickable {
 					keyState[i] >>= 0x1;
 					break;
 			}
-			
 			// Handle cursor.
 			if(i < 16) {
 				switch(cursorState[i]) {

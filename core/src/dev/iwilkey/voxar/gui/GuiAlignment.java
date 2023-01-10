@@ -17,50 +17,45 @@ public final class GuiAlignment {
 	 * @return (x, y) where the window should be positioned.
 	 */
 	public static ImVec2 anchorTo(ImVec2 dimensions, Anchor anchor) {
-		int x = -1;
-		int y = -1;
+		ImVec2 ret = new ImVec2(-1, -1);
+		final int ww = VoxarRenderer.WW;
+		final int hh = VoxarRenderer.WH;
+		final int cax = ww / 2;
+		final int cay = hh / 2;
+		final int dx = (int)dimensions.x;
+		final int dy = (int)dimensions.y;
+		final int cdx = dx / 2;
+		final int cdy = dy / 2;
 		switch(anchor) {
 			case CENTER:
-				x = (int)((VoxarRenderer.WW / 2) - (dimensions.x / 2));
-				y = (int)((VoxarRenderer.WH / 2) - (dimensions.y / 2));
+				ret = new ImVec2(cax - cdx, cay - cdy);
 				break;
 			case TOP_CENTER:
-				x = (int)((VoxarRenderer.WW / 2) - (dimensions.x / 2));
-				y = 0;
+				ret = new ImVec2(cax - cdx, 0);
 				break; 
-			case TOP_LEFT:
-				x = 0;
-				y = 0;
-				break;
 			case TOP_RIGHT:
-				x = (int)((VoxarRenderer.WW) - dimensions.x);
-				y = 0;
+				ret = new ImVec2(ww - dx, 0);
 				break;
 			case CENTER_LEFT:
-				x = 0;
-				y = (int)((VoxarRenderer.WH / 2) - (dimensions.y / 2));
+				ret = new ImVec2(0, cay - cdy);
 				break;
 			case CENTER_RIGHT:
-				x = (int)((VoxarRenderer.WW) - dimensions.x);
-				y = (int)((VoxarRenderer.WH / 2) - (dimensions.y / 2));
+				ret = new ImVec2(ww - dx, cay - cdy);
 				break;
 			case BOTTOM_LEFT:
-				x = 0;
-				y = (int)((VoxarRenderer.WH) - dimensions.y);
+				ret = new ImVec2(0, hh - dy);
 				break;
 			case BOTTOM_CENTER:
-				x = (int)((VoxarRenderer.WW / 2) - (dimensions.x / 2));
-				y = (int)((VoxarRenderer.WH) - dimensions.y);
+				ret = new ImVec2(cax - cdx, hh - dy);
 				break;
 			case BOTTOM_RIGHT:
-				x = (int)((VoxarRenderer.WW) - dimensions.x);
-				y = (int)((VoxarRenderer.WH) - dimensions.y);
+				ret = new ImVec2(ww - dx, hh - dy);
 				break;
-			default:
-				x = 0;
-				y = 0;
+			case TOP_LEFT:
+			default:	
+				ret = new ImVec2(0, 0);
 		}
-		return new ImVec2(x, y);
+		return ret;
 	}
 	
 	/** 

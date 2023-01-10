@@ -8,6 +8,7 @@ import com.badlogic.gdx.Gdx;
 import dev.iwilkey.voxar.clock.Tickable;
 import dev.iwilkey.voxar.gfx.VoxarRenderer;
 import dev.iwilkey.voxar.input.StandardInput;
+import dev.iwilkey.voxar.settings.KeyBinding;
 import dev.iwilkey.voxar.state.VoxarEngineState;
 import imgui.ImGui;
 
@@ -30,14 +31,14 @@ public final class VoxarEngine extends ApplicationAdapter implements Tickable {
 	 * GIT_VERSION is updated whenever a branch is committed to. It is formatted like <git branch>-<push #>.
 	 * Please note that the push number is changed directly before a branches commit-push sequence.
 	 */
-	public static final String GIT_VERSION = "master-p1";
+	public static final String GIT_VERSION = "master-p2";
 	
 	/**
 	 * ENGINE_VERSION is appended to whenever an update to the engine is released to GitHub or executable. An engine
 	 * update is defined as any modification, addition, subtraction, or optimization to Voxar that does not directly
 	 * effect gameplay.
 	 */
-	public static final String ENGINE_VERSION = "0.01";
+	public static final String ENGINE_VERSION = "0.02";
 	
 	/**
 	 * True if the Voxar engine is in an "idle" state, meaning there is no active state dictating its behavior.
@@ -84,9 +85,10 @@ public final class VoxarEngine extends ApplicationAdapter implements Tickable {
 		// Create and apply input processor.
 		input = new StandardInput(); 
 		Gdx.input.setInputProcessor(input);
+		// Set up preferences...
+		new KeyBinding();
 		// Begin entry state.
 		this.state.init(this);
-				
 		// Show the window.
 		GLFW.glfwShowWindow(renderer.getWindow().getWindowHandle());
 	}
