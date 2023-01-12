@@ -35,9 +35,12 @@ public final class RasterRenderer implements Renderable, Tickable, Disposable {
 	
 	@Override
 	public void render() {
+		if(gfxBuffer.size == 0) 
+			return;
 		gfx2D.begin();
 		for(Sprite s : gfxBuffer) 
 			s.draw(gfx2D);
+		
 		gfx2D.end();
 	}
 	

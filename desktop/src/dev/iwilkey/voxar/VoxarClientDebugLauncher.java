@@ -8,7 +8,7 @@ import dev.iwilkey.voxar.state.VoxarDebugWorld;
  */
 public class VoxarClientDebugLauncher {
 	public static void main(String[] args) {
-		VoxarApplicationConfiguration config = new VoxarApplicationConfiguration("Voxar Engine [DEBUG CLIENT]", true);
+		VoxarApplicationConfiguration config = new VoxarApplicationConfiguration("Voxar Engine [DEBUG CLIENT]", false);
 		VoxarEngine engine =  new VoxarEngine(new VoxarDebugWorld());
 		new VoxarApplication(engine, config);
 	}	
