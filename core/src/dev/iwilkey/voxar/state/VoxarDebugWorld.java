@@ -3,12 +3,11 @@ package dev.iwilkey.voxar.state;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.Input.Keys;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Vector3;
 
 import dev.iwilkey.voxar.asset.AssetType;
 import dev.iwilkey.voxar.asset.VoxarAsset;
+import dev.iwilkey.voxar.gfx.Raster25;
 import dev.iwilkey.voxar.gfx.RasterRenderer;
 import dev.iwilkey.voxar.gfx.VoxarRenderer;
 import dev.iwilkey.voxar.input.StandardInput;
@@ -30,17 +29,16 @@ public final class VoxarDebugWorld extends VoxarEngineState {
 				new VoxarAsset("cube", "vox/cube/cube.vox.obj", AssetType.MODEL),
 				new VoxarAsset("crosshair", "img/crosshair.png", AssetType.TEXTURE));
 	}
-	
-	Sprite crosshair;
+
 	FreeController controller;
+	Raster25 test;
 
 	@Override
 	public void begin() {
 		Gdx.input.setCursorCatched(true);
 		Gdx.input.setCursorPosition(VoxarRenderer.WW / 2, VoxarRenderer.WH / 2);
 		focused = true;
-		crosshair = new Sprite(getAssetManager().get("img/crosshair.png", Texture.class));
-		crosshair.setPosition((VoxarRenderer.WW / 2) - (crosshair.getWidth() / 2), (VoxarRenderer.WH / 2) - (crosshair.getHeight() / 2));
+		test = new Raster25(Gdx.files.internal("img/crosshair.png"));
 		setUpSpace();
 	}
 	
@@ -52,7 +50,7 @@ public final class VoxarDebugWorld extends VoxarEngineState {
 	@Override
 	public void process() {
 		focus();
-		if(focused) RasterRenderer.render(crosshair);
+		RasterRenderer.renderToVoxelWorld(test, 2, 2, 2, 1.0f, 1.0f, true);
 	}
 
 	@Override
@@ -67,7 +65,6 @@ public final class VoxarDebugWorld extends VoxarEngineState {
 		if(StandardInput.cursorJustDown(Buttons.LEFT) && !focused) {
 			focused = true;
 			Gdx.input.setCursorCatched(true);
-			Gdx.input.setCursorPosition(VoxarRenderer.WW / 2, VoxarRenderer.WH / 2);
 			controller.setActive(true);
 		}
 	}

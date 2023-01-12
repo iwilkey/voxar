@@ -5,18 +5,21 @@ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Graphics;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Window;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
+import com.badlogic.gdx.graphics.g3d.decals.CameraGroupStrategy;
+import com.badlogic.gdx.graphics.g3d.decals.DecalBatch;
 import com.badlogic.gdx.utils.Disposable;
 
 import dev.iwilkey.voxar.gui.Anchor;
 import dev.iwilkey.voxar.gui.GuiModule;
 import dev.iwilkey.voxar.gui.GuiModuleContents;
+import dev.iwilkey.voxar.perspective.VoxelSpacePerspective;
 import dev.iwilkey.voxar.state.VoxarEngineState;
 import dev.iwilkey.voxar.world.VoxelSpace;
 import imgui.ImGui;
 import imgui.flag.ImGuiWindowFlags;
 
 /**
- * The Voxar engine's 2D, 3D, and GUI renderer.
+ * The Voxar engine's 2D, 2.5D, 3D, and GUI renderer.
  * @author iwilkey
  */
 public final class VoxarRenderer implements Disposable, RenderResizable {
@@ -89,16 +92,14 @@ public final class VoxarRenderer implements Disposable, RenderResizable {
 	private final DearImGuiRenderer gui;
 	
 	/**
-	 * Renderer for two-dimensional raster graphics in viewport space.
+	 * Renderer for 2D or 2.5D raster graphics in viewport (2D) or 3D space.
 	 */
 	private final RasterRenderer raster;
 	
 	/**
-	 * The Voxar engine's capability to draw batched Renderable instances using back-end shaders, sorting algorithms, and matrix manipulation for perspective.
+	 * The Voxar engine's capability to draw batched Renderable instances (3D models) in 3D space.
 	 */
 	private final ModelBatch gfx3D;
-	
-	
 	
 	private final GuiModule idleGui = new GuiModule("Voxar Engine", new GuiModuleContents() {
 		@Override
@@ -155,9 +156,14 @@ public final class VoxarRenderer implements Disposable, RenderResizable {
 	void process(VoxarEngineState state) {
 		if(state.hasVoxelSpace()) {
 			VoxelSpace space = state.getVoxelSpace();
-			gfx3D.begin(space.getRenderingPerspective());
+			VoxelSpacePerspective perspective = space.getRenderingPerspective();
+			// Update the RasterRenderer's Raster25 renderer with rendering space perspective (if needed).
+			if(raster.get25D() == null)
+				raster.set25D(new DecalBatch(new CameraGroupStrategy(perspective)));
+			gfx3D.begin(perspective);
 			gfx3D.render(space.getRenderables(), space.getLighting());
 			gfx3D.end();
+			raster.render3D(perspective);
 			if(space.getPhysicsEngine().isDebugMode()) {
 				space.getPhysicsEngine().getDebugRenderer().begin(space.getRenderingPerspective());
 				space.getPhysicsEngine().getDynamicsWorld().debugDrawWorld();
@@ -170,9 +176,16 @@ public final class VoxarRenderer implements Disposable, RenderResizable {
 	 * Draw raster graphics and GUI to viewport space.
 	 */
 	void postprocess() {
-		raster.render();
+		raster.render2D();
 		raster.tick();
-		gui.render();
+		gui.render2D();
+	}
+	
+	/**
+	 * Called when the Voxar engine switches a state to make sure the RasterRenderer does not try and render Raster25's to a state with no VoxelSpace.
+	 */
+	public void resetCameraGroupStrategy() {
+		raster.set25D(null);
 	}
 	
 	/**
@@ -202,6 +215,7 @@ public final class VoxarRenderer implements Disposable, RenderResizable {
 	
 	@Override
 	public void windowResizeCallback(int nw, int nh) {
+		raster.windowResizeCallback(nw, nh);
 		WW = nw;
 		WH = nh;
 	}
@@ -228,7 +242,14 @@ public final class VoxarRenderer implements Disposable, RenderResizable {
 	}
 	
 	/**
-	 * @return the renderer for two-dimensional raster graphics in viewport space.
+	 * @return the Voxar engine's capability to draw batched Renderable instances (3D models) in 3D space.
+	 */
+	public ModelBatch get3D() {
+		return gfx3D;
+	}
+	
+	/**
+	 * @return the renderer for 2D or 2.5D raster graphics in viewport (2D) or 3D space.
 	 */
 	public RasterRenderer getRasterRenderer() {
 		return raster;

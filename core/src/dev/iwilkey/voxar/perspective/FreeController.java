@@ -2,23 +2,33 @@ package dev.iwilkey.voxar.perspective;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.Vector3;
 
+import dev.iwilkey.voxar.gfx.Raster2;
+import dev.iwilkey.voxar.gfx.RasterRenderer;
+import dev.iwilkey.voxar.gfx.VoxarRenderer;
 import dev.iwilkey.voxar.input.StandardInput;
 import dev.iwilkey.voxar.settings.KeyBinding;
 
 /**
- * A PerspectiveController that allows one to traverse a VoxelSpace freely.
+ * A Controller that allows one to traverse a VoxelSpace freely. Includes crosshair.
  * @author iwilkey
  */
-public final class FreeController implements PerspectiveController {
+public final class FreeController extends Controller {
 	
-	// Control variables...
-	private static final float VERT_DEGREE_CLAMP = 90.0f;
+	private static final float VERT_DEGREE_CLAMP = 88.0f;
+	
+	// Crosshair rendering...
+	private Raster2 crosshair;
+	private int crosshairDim;
+	
+	// Vector math...
 	private Vector3 xzDirection;
 	private Vector3 target;
-	private boolean active;
+	
+	// Control variables...
 	private double rotVertAngle;
 	private float horLookSens;
 	private float vertLookSens;
@@ -31,50 +41,69 @@ public final class FreeController implements PerspectiveController {
 	public FreeController() {
 		// Set default control variables...
 		rotVertAngle = 0.0f;
-		horLookSens = 0.3f;
-		vertLookSens = 0.3f;
+		horLookSens = 0.2f;
+		vertLookSens = 0.2f;
 		forwardSpeed = 1.0f;
 		strafeSpeed = 1.0f;
 		upSpeed = 1.0f;
 		translationSmoothingConstant = 0.01f;
 		translationInterpolationType = Interpolation.exp10Out;
-		active = true;
-		xzDirection = new Vector3(1, 0, 0);
-		target = new Vector3(0, 2, 0);
+		
+		// Set up vector math...
+		xzDirection = new Vector3(1, 0, 0); // Must be the same as initial direction of the active VoxelSpacePerspective.
+		target = new Vector3(0, 2, 0); // Must be the same as the initial position of the active VoxelSpacePerspective.
 		
 		// Set default control bindings...
 		KeyBinding.setBinding("free_controller_forward", Keys.W);
 		KeyBinding.setBinding("free_controller_backward", Keys.S);
-		KeyBinding.setBinding("free_controller_stafe_right", Keys.D);
-		KeyBinding.setBinding("free_controller_stafe_left", Keys.A);
+		KeyBinding.setBinding("free_controller_strafe_right", Keys.D);
+		KeyBinding.setBinding("free_controller_strafe_left", Keys.A);
 		KeyBinding.setBinding("free_controller_ascend", Keys.SPACE);
 		KeyBinding.setBinding("free_controller_descend", Keys.SHIFT_LEFT);
+		
+		// Crosshair initialization...
+		crosshair = new Raster2(Gdx.files.internal("img/crosshair.png"));
+		crosshair.setTint(Color.WHITE);
+		// 12 px x 12 px crosshair by default...
+		crosshairDim = 12;
+		
+		this.active = true;
 	}
 	
 	@Override
-	public void control(VoxelSpacePerspective perspective) {	
-		perspective.position.interpolate(target, translationSmoothingConstant, 
-				translationInterpolationType);
-		if(!active) return;
+	public void control(VoxelSpacePerspective perspective) {
+		// Update position no matter if active or not.
+		perspective.position.interpolate(target, translationSmoothingConstant, translationInterpolationType);
+		
+		if(!active)
+			return;
+		
+		renderCrosshair();
+		
 		// Translation...
 		if(StandardInput.keyCurrent(KeyBinding.getBinding("free_controller_forward")))
 			target.add(new Vector3(xzDirection.x * forwardSpeed, 0, xzDirection.z * forwardSpeed));
 		if(StandardInput.keyCurrent(KeyBinding.getBinding("free_controller_backward")))
 			target.sub(new Vector3(xzDirection.x * forwardSpeed, 0, xzDirection.z * forwardSpeed));
-		if(StandardInput.keyCurrent(KeyBinding.getBinding("free_controller_stafe_right")))
+		if(StandardInput.keyCurrent(KeyBinding.getBinding("free_controller_strafe_right")))
 			target.add(new Vector3(-xzDirection.z * strafeSpeed, 0, xzDirection.x * strafeSpeed));
-		if(StandardInput.keyCurrent(KeyBinding.getBinding("free_controller_stafe_left")))
+		if(StandardInput.keyCurrent(KeyBinding.getBinding("free_controller_strafe_left")))
 			target.sub(new Vector3(-xzDirection.z * strafeSpeed, 0, xzDirection.x * strafeSpeed));
 		if(StandardInput.keyCurrent(KeyBinding.getBinding("free_controller_ascend")))
 			target.add(Vector3.Y.scl(upSpeed));
 		if(StandardInput.keyCurrent(KeyBinding.getBinding("free_controller_descend")))
 			target.sub(Vector3.Y.scl(upSpeed));
-		// Look...
+		
+		// Get mouse delta...
 		int deltaX = Gdx.input.getDeltaX();
+		int deltaY = Gdx.input.getDeltaY();
+		
+		// Update horizontal look...
 		double deltaHor = -deltaX * horLookSens;
 		perspective.direction.rotate(Vector3.Y, (float)deltaHor);
 		xzDirection.rotate(Vector3.Y, (float)deltaHor);
-		int deltaY = Gdx.input.getDeltaY();
+		
+		// Update vertical look...
 		double newVertRotAngle = rotVertAngle;
 		double deltaVert = -deltaY * vertLookSens;
 		newVertRotAngle += deltaVert;
@@ -82,6 +111,15 @@ public final class FreeController implements PerspectiveController {
 			rotVertAngle = newVertRotAngle;
 			perspective.direction.rotate(new Vector3(-perspective.direction.z, 0, perspective.direction.x), (float)deltaVert);
 		}
+	}
+	
+	/**
+	 * Render the crosshair to the screen using the RasterRenderer.
+	 */
+	private void renderCrosshair() {
+		final int x = (VoxarRenderer.WW / 2) - (crosshairDim / 2);
+		final int y = (VoxarRenderer.WH / 2) - (crosshairDim / 2);
+		RasterRenderer.renderToViewport(crosshair, x, y, crosshairDim, crosshairDim);
 	}
 	
 	/**
@@ -161,7 +199,7 @@ public final class FreeController implements PerspectiveController {
 	 * @param key the key.
 	 */
 	public void setRightStrafeKeyBinding(int key) {
-		KeyBinding.setBinding("free_controller_stafe_right", key);
+		KeyBinding.setBinding("free_controller_strafe_right", key);
 	}
 	
 	/**
@@ -169,7 +207,7 @@ public final class FreeController implements PerspectiveController {
 	 * @param key the key.
 	 */
 	public void setLeftStrafeKeyBinding(int key) {
-		KeyBinding.setBinding("free_controller_stafe_left", key);
+		KeyBinding.setBinding("free_controller_strafe_left", key);
 	}
 	
 	/**
@@ -189,10 +227,23 @@ public final class FreeController implements PerspectiveController {
 	}
 	
 	/**
-	 * Set whether or not the controller should react to input.
-	 * @param active true or false.
+	 * Set how big the rendered crosshair is, in px / px.
+	 * @param px the square side length, in pixels. For example, px = 25, the crosshair is rendered 25 px x 25 px in the center of the screen.
 	 */
-	public void setActive(boolean active) {
-		this.active = active;
+	public void setCrosshairDimensions(int px) {
+		crosshairDim = px;
+	}
+	
+	/**
+	 * Set the tint of the crosshair, applied at RasterRenderer render time.
+	 * @param color the rgba color.
+	 */
+	public void setCrosshairColor(Color color) {
+		crosshair.setTint(color);
+	}
+	
+	@Override
+	public void dispose() {
+		crosshair.dispose();
 	}
 }

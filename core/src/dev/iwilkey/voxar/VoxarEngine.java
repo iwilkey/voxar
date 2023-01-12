@@ -31,14 +31,14 @@ public final class VoxarEngine extends ApplicationAdapter implements Tickable {
 	 * GIT_VERSION is updated whenever a branch is committed to. It is formatted like <git branch>-<push #>.
 	 * Please note that the push number is changed directly before a branches commit-push sequence.
 	 */
-	public static final String GIT_VERSION = "master-p3";
+	public static final String GIT_VERSION = "master-p4";
 	
 	/**
 	 * ENGINE_VERSION is appended to whenever an update to the engine is released to GitHub or executable. An engine
 	 * update is defined as any modification, addition, subtraction, or optimization to Voxar that does not directly
 	 * effect gameplay.
 	 */
-	public static final String ENGINE_VERSION = "0.03";
+	public static final String ENGINE_VERSION = "0.04";
 	
 	/**
 	 * True if the Voxar engine is in an "idle" state, meaning there is no active state dictating its behavior.
@@ -104,9 +104,11 @@ public final class VoxarEngine extends ApplicationAdapter implements Tickable {
 		
 		// Handle input and differentiate ImGui vs engine input. TODO: workaround initial window focusing ImGui issue!
 		if(ImGui.getIO().getWantCaptureMouse() || ImGui.getIO().getWantCaptureKeyboard()) {
-			
+			if(Gdx.input.getInputProcessor() != null)
+				Gdx.input.setInputProcessor(null);
 		} else {
-			
+			if(Gdx.input.getInputProcessor() == null)
+				Gdx.input.setInputProcessor(input);
 		}
 	
 		// If there is no state to render, the engine will be put in an "idle" state.
@@ -140,6 +142,7 @@ public final class VoxarEngine extends ApplicationAdapter implements Tickable {
 	 * @param state the state to switch to.
 	 */
 	public void setState(VoxarEngineState state) {
+		renderer.resetCameraGroupStrategy();
 		if(this.state != null) {
 			this.state.end();
 			// There is no need to keep the assets loaded of a state that is not in use.

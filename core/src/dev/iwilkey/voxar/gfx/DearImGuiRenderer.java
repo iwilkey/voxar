@@ -45,7 +45,7 @@ public final class DearImGuiRenderer implements Disposable, Renderable {
 	}
 	
 	@Override
-	public void render() {
+	public void render2D() {
 		ImGui.render();
 		diGl3.renderDrawData(ImGui.getDrawData());
 	}
