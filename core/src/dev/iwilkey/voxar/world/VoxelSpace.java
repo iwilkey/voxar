@@ -2,15 +2,16 @@ package dev.iwilkey.voxar.world;
 
 import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.ModelCache;
+import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
-import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
+import com.badlogic.gdx.graphics.g3d.environment.PointLight;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 
 import dev.iwilkey.voxar.clock.Tickable;
-import dev.iwilkey.voxar.entity.VoxelEntity;
 import dev.iwilkey.voxar.entity.VoxelEntityManager;
 import dev.iwilkey.voxar.gfx.RenderResizable;
+import dev.iwilkey.voxar.gfx.ShadowProvider;
 import dev.iwilkey.voxar.gfx.VoxarRenderer;
 import dev.iwilkey.voxar.perspective.Controller;
 import dev.iwilkey.voxar.perspective.VoxelSpacePerspective;
@@ -44,24 +45,29 @@ public final class VoxelSpace implements Disposable, Tickable, RenderResizable {
 	private final ModelCache renderables;
 	
 	/**
-	 * Real-time OpenGL lighting and shadows.
+	 * OpenGL lighting.
 	 */
 	private final Environment lighting;
+	
+	/**
+	 * Shadow provider.
+	 */
+	private final ShadowProvider shadowProvider;
 	
 	/**
 	 * "Camera" that captures the VoxelSpace's Renderables from any perspective.
 	 */
 	private final VoxelSpacePerspective camera;
-	
+
 	public VoxelSpace(VoxarEngineState operatingState) {
 		this.operatingState = operatingState;
 		
-		// Initialize the RenderableProvider and lighting.
+		// Initialize the RenderableProvider, lighting, and shadows.
 		renderables = new ModelCache();
 		lighting = new Environment();
 		lighting.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.4f, 1f));
-		lighting.add(new DirectionalLight().set(0.8f, 0.8f, 0.8f, -1f, -0.8f, -0.2f));
-		// environment.add(new PointLight().set(Color.WHITE, new Vector3(0, 4, 0), 10.0f));
+		lighting.add(new PointLight().set(1f, 1f, 1f, 5, 10, 1f, 10f));
+		shadowProvider = new ShadowProvider();
 		
 		// Initialize and configure the "camera".
 		camera = new VoxelSpacePerspective(67, VoxarRenderer.WW, VoxarRenderer.WH);
@@ -77,7 +83,7 @@ public final class VoxelSpace implements Disposable, Tickable, RenderResizable {
 	 * Bake and optimize Renderables active in the VoxelSpace.
 	 * @param entities active Renderables.
 	 */
-	protected void optimizeAndProvideRenderables(Array<VoxelEntity> entities) {
+	protected void optimizeAndProvideRenderables(Array<ModelInstance> entities) {
 		renderables.begin(camera);
 		renderables.add(entities);
 		renderables.end();
@@ -128,10 +134,24 @@ public final class VoxelSpace implements Disposable, Tickable, RenderResizable {
 	}
 	
 	/**
+	 * @return iterative Renderables.
+	 */
+	public Array<ModelInstance> getRawRenderables() {
+		return entityManager.getRenderables();
+	}
+	
+	/**
 	 * @return the lighting and shadow configuration of the VoxelSpace.
 	 */
 	public Environment getLighting() {
 		return lighting;
+	}
+	
+	/**
+	 * @return this VoxelSpace's shadow provider.
+	 */
+	public ShadowProvider getShadowProvider() {
+		return shadowProvider;
 	}
 	
 	/**

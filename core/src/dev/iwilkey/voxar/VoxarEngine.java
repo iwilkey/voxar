@@ -31,14 +31,14 @@ public final class VoxarEngine extends ApplicationAdapter implements Tickable {
 	 * GIT_VERSION is updated whenever a branch is committed to. It is formatted like <git branch>-<push #>.
 	 * Please note that the push number is changed directly before a branches commit-push sequence.
 	 */
-	public static final String GIT_VERSION = "master-p4";
+	public static final String GIT_VERSION = "master-p5";
 	
 	/**
 	 * ENGINE_VERSION is appended to whenever an update to the engine is released to GitHub or executable. An engine
 	 * update is defined as any modification, addition, subtraction, or optimization to Voxar that does not directly
 	 * effect gameplay.
 	 */
-	public static final String ENGINE_VERSION = "0.04";
+	public static final String ENGINE_VERSION = "0.05";
 	
 	/**
 	 * True if the Voxar engine is in an "idle" state, meaning there is no active state dictating its behavior.
@@ -113,7 +113,7 @@ public final class VoxarEngine extends ApplicationAdapter implements Tickable {
 	
 		// If there is no state to render, the engine will be put in an "idle" state.
 		if(this.state == null) {
-			renderer.renderState(null);
+			renderer.renderNullState();
 			ENGINE_IDLE = true;
 			return;
 		} else ENGINE_IDLE = false;
@@ -127,7 +127,6 @@ public final class VoxarEngine extends ApplicationAdapter implements Tickable {
 		// Tick and render.
 		tick();
 		renderer.renderState(this.state);
-
 	}
 	
 	@Override

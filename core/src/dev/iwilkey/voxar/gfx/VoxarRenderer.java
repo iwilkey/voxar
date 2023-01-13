@@ -3,12 +3,15 @@ package dev.iwilkey.voxar.gfx;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Graphics;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Window;
+import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.decals.CameraGroupStrategy;
 import com.badlogic.gdx.graphics.g3d.decals.DecalBatch;
+import com.badlogic.gdx.graphics.glutils.HdpiUtils;
 import com.badlogic.gdx.utils.Disposable;
 
+import dev.iwilkey.voxar.gfx.shadows.system.ShadowSystem;
 import dev.iwilkey.voxar.gui.Anchor;
 import dev.iwilkey.voxar.gui.GuiModule;
 import dev.iwilkey.voxar.gui.GuiModuleContents;
@@ -61,7 +64,7 @@ public final class VoxarRenderer implements Disposable, RenderResizable {
 	/**
 	 * MSAA samples. 
 	 */
-	public static final int MSAA_SAMPLES = 0x00;
+	public static final int MSAA_SAMPLES = 0x03;
 	
 	/*
 	 * Runtime variables.
@@ -129,13 +132,10 @@ public final class VoxarRenderer implements Disposable, RenderResizable {
 		Gdx.gl.glClearColor(0.1f, 0.1f, 0.1f, 1f);
 		WW = Gdx.graphics.getWidth();
 		WH = Gdx.graphics.getHeight();
-		
 		// Set up raster (2D) renderer.
 		raster = new RasterRenderer();
-		
 		// Set up 3D renderer.
 		gfx3D = new ModelBatch();
-		
 		// Set up ImGui renderer.
 		gui = new DearImGuiRenderer(window.getWindowHandle());
 	}
@@ -144,6 +144,7 @@ public final class VoxarRenderer implements Disposable, RenderResizable {
 	 * Clear color buffer, depth buffer, and GUI buffers. Called directly before new data is to be drawn to the screen.
 	 */
 	void preprocess() {
+		Gdx.gl.glClearColor(0.1f, 0.1f, 0.1f, 1f);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 		Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
 		gui.clearBuffer();
@@ -155,21 +156,54 @@ public final class VoxarRenderer implements Disposable, RenderResizable {
 	 */
 	void process(VoxarEngineState state) {
 		if(state.hasVoxelSpace()) {
+			
 			VoxelSpace space = state.getVoxelSpace();
 			VoxelSpacePerspective perspective = space.getRenderingPerspective();
-			// Update the RasterRenderer's Raster25 renderer with rendering space perspective (if needed).
+			
+			// Render shadows...
+			ShadowSystem system = space.getShadowProvider().getShadowSystem();
+			system.begin(perspective, space.getRawRenderables());
+			system.update();
+			for(int i = 0; i < system.getPassQuantity(); i++) {
+			    system.begin(i);
+			    Camera camera;
+			    while((camera = system.next()) != null) {
+			    	space.getShadowProvider().getPassBatches().get(i).begin(camera);
+			    	space.getShadowProvider().getPassBatches().get(i).render(space.getRawRenderables(), space.getLighting());
+			    	space.getShadowProvider().getPassBatches().get(i).end();
+			    }
+			    camera = null;
+			    system.end(i);
+			}
+			system.end();
+			
+			HdpiUtils.glViewport(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+			Gdx.gl.glClearColor(0.1f, 0.1f, 0.1f, 1f);
+			Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
+			
+			space.getShadowProvider().getMainBatch().begin(perspective);
+			space.getShadowProvider().getMainBatch().render(space.getRenderables(), space.getLighting());
+			space.getShadowProvider().getMainBatch().end();
+			
 			if(raster.get25D() == null)
 				raster.set25D(new DecalBatch(new CameraGroupStrategy(perspective)));
+			/*
 			gfx3D.begin(perspective);
 			gfx3D.render(space.getRenderables(), space.getLighting());
 			gfx3D.end();
+			*/
 			raster.render3D(perspective);
 			if(space.getPhysicsEngine().isDebugMode()) {
 				space.getPhysicsEngine().getDebugRenderer().begin(space.getRenderingPerspective());
 				space.getPhysicsEngine().getDynamicsWorld().debugDrawWorld();
 				space.getPhysicsEngine().getDebugRenderer().end();
 			}
+
+			
+		} else {
+			preprocess();
 		}
+		gui.clearBuffer();
 	}
 	
 	/**
@@ -193,12 +227,17 @@ public final class VoxarRenderer implements Disposable, RenderResizable {
 	 * @param state the state to render.
 	 */
 	public void renderState(VoxarEngineState state) {
+		process(state);
+		state.gui();
+		postprocess();
+	}
+	
+	/**
+	 * Engine idles.
+	 */
+	public void renderNullState() {
 		preprocess();
-		if(state == null) idleGui.render(Anchor.CENTER);
-		else {
-			process(state);
-			state.gui();
-		}
+		idleGui.render(Anchor.CENTER);
 		postprocess();
 	}
 	

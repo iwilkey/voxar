@@ -1,5 +1,7 @@
 package dev.iwilkey.voxar.state;
 
+import java.util.Random;
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.Input.Keys;
@@ -21,6 +23,8 @@ import dev.iwilkey.voxar.world.VoxelSpace;
  * @author iwilkey
  */
 public final class VoxarDebugWorld extends VoxarEngineState {
+	
+	static Random random = new Random();
 	
 	private boolean focused;
 
@@ -51,6 +55,12 @@ public final class VoxarDebugWorld extends VoxarEngineState {
 	public void process() {
 		focus();
 		RasterRenderer.renderToVoxelWorld(test, 2, 2, 2, 1.0f, 1.0f, true);
+		
+		if(StandardInput.cursorJustDown(Buttons.LEFT)) {
+			long cube = getVoxelSpace().getEntityManager().addRigidbody("vox/cube/cube.vox.obj", random.nextInt(1, 100), PhysicsPrimitive.CUBOID, PhysicsBodyType.DYNAMIC);
+			getVoxelSpace().getEntityManager().getEntity(cube).setPosition(new Vector3(random.nextInt(-5, 5), random.nextInt(20, 40), random.nextInt(-5, 5)));
+		}
+		
 	}
 
 	@Override
@@ -71,11 +81,13 @@ public final class VoxarDebugWorld extends VoxarEngineState {
 	
 	void setUpSpace() {
 		setVoxelSpace(new VoxelSpace(this));
-		for(int x = -10; x < 10; x++) 
+		for(int x = -10; x < 10; x++) {
 			for(int z = -10; z < 10; z++) {
 				long cube = getVoxelSpace().getEntityManager().addRigidbody("vox/cube/cube.vox.obj", 0.0f, PhysicsPrimitive.CUBOID, PhysicsBodyType.STATIC);
 				getVoxelSpace().getEntityManager().getEntity(cube).setPosition(new Vector3(x, 0, z));
 			}
+		}
+		
 		controller = new FreeController();
 		getVoxelSpace().setPerspectiveController(controller);
 	}
