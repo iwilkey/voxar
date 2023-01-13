@@ -25,8 +25,9 @@ public final class Terrain implements Renderable, Disposable {
 	private final NoiseGenerator noise;
 	
 	// Terrain settings
-	private static final long TERRAIN_CHUNK_APOTHEM = 10; // Keep in mind, chunk area = (TERRAIN_CHUNK_APOTHEM * 2)^2!
-	private static final long TERRAIN_UNIT_SUBDIVISION = 10;
+	private static final long TERRAIN_CHUNK_APOTHEM = 20; // Keep in mind, chunk area = (TERRAIN_CHUNK_APOTHEM * 2)^2!
+	private static final long TERRAIN_UNIT_SUBDIVISION = 200; // Keep in mind, (TERRAIN_UNIT_SUBDIVISION * (APOTHEM * 2)) * 4 = Perimeter of terrain chunk (in world units).
+	private static final long TERRAIN_HEIGHT_AMPLIFIER = 200; // As this number gets bigger, the generated height noise will get bigger.
 	
 	public Terrain(int seed) {
 		noise = new NoiseGenerator(seed);
@@ -45,10 +46,6 @@ public final class Terrain implements Renderable, Disposable {
 		final long dim = (TERRAIN_CHUNK_APOTHEM * TERRAIN_UNIT_SUBDIVISION);
 		for(long x = centerX - dim; x < centerX + dim; x += TERRAIN_UNIT_SUBDIVISION) {
 			for(long z = centerZ - dim; z < centerZ + dim; z += TERRAIN_UNIT_SUBDIVISION) {
-				
-				@SuppressWarnings("unused")
-				float y = (float)(noise.noise(x, z));
-				
 				String name = "loc_" + Long.toString(x) + "_" + Long.toString(z);
 				float posX = x + (TERRAIN_UNIT_SUBDIVISION / 2f);
 				float negX = x - (TERRAIN_UNIT_SUBDIVISION / 2f);
@@ -58,13 +55,12 @@ public final class Terrain implements Renderable, Disposable {
 				negX += (TERRAIN_UNIT_SUBDIVISION / 2f);
 				posZ += (TERRAIN_UNIT_SUBDIVISION / 2f);
 				negZ += (TERRAIN_UNIT_SUBDIVISION / 2f);
-				meshBuilder = modelBuilder.part(name, GL20.GL_LINES, Usage.Position | Usage.Normal, new Material(ColorAttribute.createDiffuse(Color.WHITE)));
-				VertexInfo i0 = new VertexInfo().setPos(negX, 0, negZ).setNor(0, 1, 0).setCol(Color.WHITE);
-				VertexInfo i1 = new VertexInfo().setPos(negX, 0, posZ).setNor(0, 1, 0).setCol(Color.WHITE);
-				VertexInfo i2 = new VertexInfo().setPos(posX, 0, posZ).setNor(0, 1, 0).setCol(Color.WHITE);
-				VertexInfo i3 = new VertexInfo().setPos(posX, 0, negZ).setNor(0, 1, 0).setCol(Color.WHITE);
-				meshBuilder.triangle(i0, i1, i2);
-				meshBuilder.triangle(i0, i2, i3);
+				meshBuilder = modelBuilder.part(name, GL20.GL_TRIANGLES, Usage.Position | Usage.Normal, new Material(ColorAttribute.createDiffuse(Color.WHITE)));
+				VertexInfo i0 = new VertexInfo().setPos(negX, (float)noise.noise(negX, negZ) * TERRAIN_HEIGHT_AMPLIFIER, negZ).setNor(0, 1, 0).setCol(Color.WHITE);
+				VertexInfo i1 = new VertexInfo().setPos(negX, (float)noise.noise(negX, posZ) * TERRAIN_HEIGHT_AMPLIFIER, posZ).setNor(0, 1, 0).setCol(Color.WHITE);
+				VertexInfo i2 = new VertexInfo().setPos(posX, (float)noise.noise(posX, posZ) * TERRAIN_HEIGHT_AMPLIFIER, posZ).setNor(0, 1, 0).setCol(Color.WHITE);
+				VertexInfo i3 = new VertexInfo().setPos(posX, (float)noise.noise(posX, negZ) * TERRAIN_HEIGHT_AMPLIFIER, negZ).setNor(0, 1, 0).setCol(Color.WHITE);
+				meshBuilder.rect(i0, i1, i2, i3);
 			}
 		}
 		model = modelBuilder.end();

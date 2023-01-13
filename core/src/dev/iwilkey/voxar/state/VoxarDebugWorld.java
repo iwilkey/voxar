@@ -84,7 +84,7 @@ public final class VoxarDebugWorld extends VoxarEngineState {
 		// Add some lights.
 		getVoxelSpace().getLighting().add(new DirectionalLight().set(1, 1, 1, -1f, -0.8f, -0.2f));
 		light = new PointLight().set(1f, 1f, 1f, getVoxelSpace().getRenderingPerspective().position.x, 
-				getVoxelSpace().getRenderingPerspective().position.y, getVoxelSpace().getRenderingPerspective().position.z, 5f);
+				getVoxelSpace().getRenderingPerspective().position.y, getVoxelSpace().getRenderingPerspective().position.z, 40f);
 		getVoxelSpace().getLighting().add(light);
 		
 	}
