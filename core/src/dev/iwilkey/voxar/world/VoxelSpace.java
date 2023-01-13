@@ -54,6 +54,11 @@ public final class VoxelSpace implements Disposable, Tickable, RenderResizable {
 	private final Environment lighting;
 	
 	/**
+	 * Terrain.
+	 */
+	private final Terrain terrain;
+	
+	/**
 	 * "Camera" that captures the VoxelSpace's Renderables from any perspective.
 	 */
 	private final VoxelSpacePerspective camera;
@@ -71,6 +76,8 @@ public final class VoxelSpace implements Disposable, Tickable, RenderResizable {
 		culledRenderablesSize = 0L;
 		// Initialize physics engine.
 		physicsEngine = new PhysicsEngine();
+		// Initialize terrain.
+		terrain = new Terrain(1);
 	}
 	
 	/**
@@ -83,13 +90,12 @@ public final class VoxelSpace implements Disposable, Tickable, RenderResizable {
 		for(final VoxelEntity e : entities) 
 			if(camera.frustumTest(e))
 				culledRenderables.add(e);
-		culledRenderablesSize = culledRenderables.size;
+		culledRenderablesSize = 1;
 		// Bake RenderableProviders (if any) into one draw call where possible.
-		if(culledRenderablesSize != 0) {
-			renderables.begin(camera);
-			renderables.add(culledRenderables);
-			renderables.end();
-		}
+		renderables.begin(camera);
+		// renderables.add(culledRenderables);
+		renderables.add(terrain.getRenderableProvider());
+		renderables.end();
 	}
 	
 	@Override

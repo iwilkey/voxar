@@ -1,9 +1,11 @@
 package dev.iwilkey.voxar.gfx;
 
+import com.badlogic.gdx.graphics.g3d.RenderableProvider;
+
 import dev.iwilkey.voxar.perspective.VoxelSpacePerspective;
 
 /**
- * Interface for objects capable of rendering 2D or 3D graphics to the screen.
+ * Interface for objects capable of rendering or capable of being rendered.
  * @author iwilkey
  */
 public interface Renderable {
@@ -22,4 +24,11 @@ public interface Renderable {
 	 * @param perspective the VoxelSpacePerspective of VoxelSpace object is rendered in.
 	 */
 	default public void render3D(VoxelSpacePerspective perspective) {}
+	
+	/**
+	 * @return a RenderableProvider of this Renderable object.
+	 */
+	default public RenderableProvider getRenderableProvider() {
+		return null;
+	}
 }

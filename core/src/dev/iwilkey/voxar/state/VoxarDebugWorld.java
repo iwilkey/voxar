@@ -52,7 +52,7 @@ public final class VoxarDebugWorld extends VoxarEngineState {
 	@Override
 	public void process() {
 		focus();
-		RasterRenderer.renderRasterInWorldSpace(test, 2, 2, 2, 1.0f, 1.0f, true);
+		RasterRenderer.renderRasterInWorldSpace(test, 0, 0, 0, 1.0f, 1.0f, true);
 		light.setPosition(getVoxelSpace().getRenderingPerspective().position);
 	}
 
