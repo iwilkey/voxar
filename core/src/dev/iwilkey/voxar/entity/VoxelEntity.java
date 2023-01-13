@@ -4,6 +4,7 @@ import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.utils.Disposable;
 
 /**
@@ -28,12 +29,40 @@ public class VoxelEntity extends ModelInstance implements Disposable {
 	private double health = 1f;
 	
 	/**
+	 * The dimensions of this entity. Used mostly for frustum culling.
+	 */
+	private BoundingBox bounding;
+	
+	/**
+	 * Return the center of the bounding box.
+	 */
+	private Vector3 centerOfBounding;
+	
+	/**
+	 * The dimensions of the object.
+	 */
+	private Vector3 dimensions; 
+	
+	/**
+	 * Radius of the object.
+	 */
+	private float radius;
+	
+	/**
 	 * A new instance of a VoxelEntity.
 	 * @param name entity's name.
 	 */
 	public VoxelEntity(Model model, String name) {
 		super(model, name);
 		this.name = name;
+		bounding = new BoundingBox();
+		centerOfBounding = new Vector3();
+		dimensions = new Vector3();
+		radius = 0.0f;
+		calculateBoundingBox(bounding);
+		bounding.getCenter(centerOfBounding);
+		bounding.getDimensions(dimensions);
+		radius = dimensions.len() / 2f;
 	}
 	
 	/**
@@ -117,6 +146,27 @@ public class VoxelEntity extends ModelInstance implements Disposable {
 		Quaternion rot = new Quaternion();
 		transform.getRotation(rot);
 		return rot;
+	}
+	
+	/**
+	 * @return the center of the object's bounding box.
+	 */
+	public final Vector3 getCenterOfBounding() {
+		return centerOfBounding;
+	}
+	
+	/**
+	 * @return physical dimensions of the object.
+	 */
+	public final Vector3 getDimensions() {
+		return dimensions;
+	}
+	
+	/**
+	 * @return radius of the object (from center).
+	 */
+	public final float getRadius() {
+		return radius;
 	}
 
 	@Override

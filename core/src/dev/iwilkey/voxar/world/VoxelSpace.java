@@ -4,14 +4,13 @@ import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.ModelCache;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
-import com.badlogic.gdx.graphics.g3d.environment.PointLight;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 
 import dev.iwilkey.voxar.clock.Tickable;
+import dev.iwilkey.voxar.entity.VoxelEntity;
 import dev.iwilkey.voxar.entity.VoxelEntityManager;
 import dev.iwilkey.voxar.gfx.RenderResizable;
-import dev.iwilkey.voxar.gfx.ShadowProvider;
 import dev.iwilkey.voxar.gfx.VoxarRenderer;
 import dev.iwilkey.voxar.perspective.Controller;
 import dev.iwilkey.voxar.perspective.VoxelSpacePerspective;
@@ -19,7 +18,7 @@ import dev.iwilkey.voxar.physics.PhysicsEngine;
 import dev.iwilkey.voxar.state.VoxarEngineState;
 
 /**
- * A three-dimensional environment with real-time lighting, shadows, entity management, and dynamic physics.
+ * A three-dimensional environment with real-time lighting, real-time point shadows (coming soon), entity management, and dynamic physics.
  * @author iwilkey
  */
 public final class VoxelSpace implements Disposable, Tickable, RenderResizable {
@@ -40,6 +39,11 @@ public final class VoxelSpace implements Disposable, Tickable, RenderResizable {
 	private final PhysicsEngine physicsEngine;
 	
 	/**
+	 * The amount of Renderables that should be drawn this frame.
+	 */
+	private long culledRenderablesSize;
+	
+	/**
 	 * RenderableProvider of all active VoxelEntities, baked and optimized.
 	 */
 	private final ModelCache renderables;
@@ -50,43 +54,42 @@ public final class VoxelSpace implements Disposable, Tickable, RenderResizable {
 	private final Environment lighting;
 	
 	/**
-	 * Shadow provider.
-	 */
-	private final ShadowProvider shadowProvider;
-	
-	/**
 	 * "Camera" that captures the VoxelSpace's Renderables from any perspective.
 	 */
 	private final VoxelSpacePerspective camera;
 
 	public VoxelSpace(VoxarEngineState operatingState) {
 		this.operatingState = operatingState;
-		
-		// Initialize the RenderableProvider, lighting, and shadows.
+		// Initialize the RenderableProvider, lighting, and shadows (planned for future).
 		renderables = new ModelCache();
 		lighting = new Environment();
 		lighting.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.4f, 1f));
-		lighting.add(new PointLight().set(1f, 1f, 1f, 5, 10, 1f, 10f));
-		shadowProvider = new ShadowProvider();
-		
 		// Initialize and configure the "camera".
 		camera = new VoxelSpacePerspective(67, VoxarRenderer.WW, VoxarRenderer.WH);
-		
 		// Initialize entity manager.
 		entityManager = new VoxelEntityManager(this);
-		
+		culledRenderablesSize = 0L;
 		// Initialize physics engine.
 		physicsEngine = new PhysicsEngine();
 	}
 	
 	/**
-	 * Bake and optimize Renderables active in the VoxelSpace.
-	 * @param entities active Renderables.
+	 * Bake and optimize RenderableProviders active in the VoxelSpace.
+	 * @param entities active RenderableProviders.
 	 */
-	protected void optimizeAndProvideRenderables(Array<ModelInstance> entities) {
-		renderables.begin(camera);
-		renderables.add(entities);
-		renderables.end();
+	protected void optimizeAndProvideRenderables(Array<VoxelEntity> entities) {
+		// Perform 3D frustum culling.
+		Array<ModelInstance> culledRenderables = new Array<>();
+		for(final VoxelEntity e : entities) 
+			if(camera.frustumTest(e))
+				culledRenderables.add(e);
+		culledRenderablesSize = culledRenderables.size;
+		// Bake RenderableProviders (if any) into one draw call where possible.
+		if(culledRenderablesSize != 0) {
+			renderables.begin(camera);
+			renderables.add(culledRenderables);
+			renderables.end();
+		}
 	}
 	
 	@Override
@@ -136,8 +139,15 @@ public final class VoxelSpace implements Disposable, Tickable, RenderResizable {
 	/**
 	 * @return iterative Renderables.
 	 */
-	public Array<ModelInstance> getRawRenderables() {
+	public Array<VoxelEntity> getRawRenderables() {
 		return entityManager.getRenderables();
+	}
+	
+	/**
+	 * @return the amount of RenderableProviders that should be rendered this frame.
+	 */
+	public long getCulledRenderablesSize() {
+		return culledRenderablesSize;
 	}
 	
 	/**
@@ -145,13 +155,6 @@ public final class VoxelSpace implements Disposable, Tickable, RenderResizable {
 	 */
 	public Environment getLighting() {
 		return lighting;
-	}
-	
-	/**
-	 * @return this VoxelSpace's shadow provider.
-	 */
-	public ShadowProvider getShadowProvider() {
-		return shadowProvider;
 	}
 	
 	/**

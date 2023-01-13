@@ -119,7 +119,7 @@ public final class FreeController extends Controller {
 	private void renderCrosshair() {
 		final int x = (VoxarRenderer.WW / 2) - (crosshairDim / 2);
 		final int y = (VoxarRenderer.WH / 2) - (crosshairDim / 2);
-		RasterRenderer.renderToViewport(crosshair, x, y, crosshairDim, crosshairDim);
+		RasterRenderer.renderRasterInViewportSpace(crosshair, x, y, crosshairDim, crosshairDim);
 	}
 	
 	/**

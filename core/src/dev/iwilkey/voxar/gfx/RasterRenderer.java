@@ -86,7 +86,7 @@ public final class RasterRenderer implements Renderable, RenderResizable, Tickab
 	 * @param width the rendering width in screen space.
 	 * @param height the the rendering height in screen space.
 	 */
-	public static void renderToViewport(Raster2 raster, int x, int y, int width, int height) {
+	public static void renderRasterInViewportSpace(Raster2 raster, int x, int y, int width, int height) {
 		raster.setPosition(new Vector2(x, y));
 		raster.setDimensions(new Vector2(width, height));
 		vBuffer.add(raster);
@@ -102,7 +102,7 @@ public final class RasterRenderer implements Renderable, RenderResizable, Tickab
 	 * @param scaleY the raster y-axis scale in world space.
 	 * @param billboard should the Raster25 always face the VoxelSpacePerspective?
 	 */
-	public static void renderToVoxelWorld(Raster25 raster, float x, float y, float z, float scaleX, float scaleY, boolean billboard) {
+	public static void renderRasterInWorldSpace(Raster25 raster, float x, float y, float z, float scaleX, float scaleY, boolean billboard) {
 		raster.getDecal().setPosition(x, y, z);
 		raster.getDecal().setScaleX(scaleX);
 		raster.getDecal().setScaleY(scaleY);

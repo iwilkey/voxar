@@ -9,12 +9,19 @@ import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.decals.CameraGroupStrategy;
 import com.badlogic.gdx.graphics.g3d.decals.DecalBatch;
 import com.badlogic.gdx.graphics.glutils.HdpiUtils;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 
 import dev.iwilkey.voxar.gfx.shadows.system.ShadowSystem;
+import dev.iwilkey.voxar.gfx.shadows.system.classical.ClassicalShadowSystem;
+import dev.iwilkey.voxar.gfx.shadows.utils.AABBNearFarAnalyzer;
+import dev.iwilkey.voxar.gfx.shadows.utils.BoundingSphereDirectionalAnalyzer;
+import dev.iwilkey.voxar.gfx.shadows.utils.FixedShadowMapAllocator;
+import dev.iwilkey.voxar.gfx.shadows.utils.FrustumLightFilter;
 import dev.iwilkey.voxar.gui.Anchor;
 import dev.iwilkey.voxar.gui.GuiModule;
 import dev.iwilkey.voxar.gui.GuiModuleContents;
+import dev.iwilkey.voxar.model.NullRenderableProvider;
 import dev.iwilkey.voxar.perspective.VoxelSpacePerspective;
 import dev.iwilkey.voxar.state.VoxarEngineState;
 import dev.iwilkey.voxar.world.VoxelSpace;
@@ -104,6 +111,14 @@ public final class VoxarRenderer implements Disposable, RenderResizable {
 	 */
 	private final ModelBatch gfx3D;
 	
+	/**
+	 * EXPERIMENTAL!
+	 */
+	private final ShadowSystem shadowSystem;
+	private Array<ModelBatch> shadowPassBatches;
+	
+	private NullRenderableProvider nullRenderable;
+	
 	private final GuiModule idleGui = new GuiModule("Voxar Engine", new GuiModuleContents() {
 		@Override
 		public void contents(String... args) {
@@ -134,8 +149,21 @@ public final class VoxarRenderer implements Disposable, RenderResizable {
 		WH = Gdx.graphics.getHeight();
 		// Set up raster (2D) renderer.
 		raster = new RasterRenderer();
-		// Set up 3D renderer.
-		gfx3D = new ModelBatch();
+		
+		// Set up shadow system (EXPERIMENTAL).
+		shadowSystem = new ClassicalShadowSystem(new AABBNearFarAnalyzer(), 
+				new FixedShadowMapAllocator(2048, 4), 
+				new BoundingSphereDirectionalAnalyzer(), 
+				new FrustumLightFilter());
+		shadowSystem.init();
+		shadowPassBatches = new Array<>();
+		for(int i = 0; i < shadowSystem.getPassQuantity(); i++) 
+			shadowPassBatches.add(new ModelBatch(shadowSystem.getPassShaderProvider(i)));
+		
+		// Set up main 3D renderer.
+		gfx3D = new ModelBatch(shadowSystem.getShaderProvider());
+		// Set up null renderable...
+		nullRenderable = new NullRenderableProvider();
 		// Set up ImGui renderer.
 		gui = new DearImGuiRenderer(window.getWindowHandle());
 	}
@@ -156,61 +184,54 @@ public final class VoxarRenderer implements Disposable, RenderResizable {
 	 */
 	void process(VoxarEngineState state) {
 		if(state.hasVoxelSpace()) {
-			
 			VoxelSpace space = state.getVoxelSpace();
 			VoxelSpacePerspective perspective = space.getRenderingPerspective();
-			
-			// Render shadows...
-			ShadowSystem system = space.getShadowProvider().getShadowSystem();
-			system.begin(perspective, space.getRawRenderables());
-			system.update();
-			for(int i = 0; i < system.getPassQuantity(); i++) {
-			    system.begin(i);
+			// Render shadow system (EXPERIMENTAL).
+			shadowSystem.begin(perspective, space.getRawRenderables());
+			shadowSystem.update();
+			for(int i = 0; i < shadowSystem.getPassQuantity(); i++) {
+				shadowSystem.begin(i);
 			    Camera camera;
-			    while((camera = system.next()) != null) {
-			    	space.getShadowProvider().getPassBatches().get(i).begin(camera);
-			    	space.getShadowProvider().getPassBatches().get(i).render(space.getRawRenderables(), space.getLighting());
-			    	space.getShadowProvider().getPassBatches().get(i).end();
+			    while((camera = shadowSystem.next()) != null) {
+			    	shadowPassBatches.get(i).begin(camera);
+			    	shadowPassBatches.get(i).render(space.getRawRenderables(), space.getLighting());
+			    	shadowPassBatches.get(i).end();
 			    }
 			    camera = null;
-			    system.end(i);
+			    shadowSystem.end(i);
 			}
-			system.end();
-			
+			shadowSystem.end();
 			HdpiUtils.glViewport(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 			Gdx.gl.glClearColor(0.1f, 0.1f, 0.1f, 1f);
 			Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
-			
-			space.getShadowProvider().getMainBatch().begin(perspective);
-			space.getShadowProvider().getMainBatch().render(space.getRenderables(), space.getLighting());
-			space.getShadowProvider().getMainBatch().end();
-			
 			if(raster.get25D() == null)
 				raster.set25D(new DecalBatch(new CameraGroupStrategy(perspective)));
-			/*
-			gfx3D.begin(perspective);
-			gfx3D.render(space.getRenderables(), space.getLighting());
-			gfx3D.end();
-			*/
-			raster.render3D(perspective);
-			if(space.getPhysicsEngine().isDebugMode()) {
-				space.getPhysicsEngine().getDebugRenderer().begin(space.getRenderingPerspective());
-				space.getPhysicsEngine().getDynamicsWorld().debugDrawWorld();
-				space.getPhysicsEngine().getDebugRenderer().end();
+			if(space.getCulledRenderablesSize() != 0) {
+				gfx3D.begin(perspective);
+				gfx3D.render(space.getRenderables(), space.getLighting());
+				gfx3D.end();
+				raster.render3D(perspective);
+				raster.render2D();
+				if(space.getPhysicsEngine().isDebugMode()) {
+					space.getPhysicsEngine().getDebugRenderer().begin(space.getRenderingPerspective());
+					space.getPhysicsEngine().getDynamicsWorld().debugDrawWorld();
+					space.getPhysicsEngine().getDebugRenderer().end();
+				}
+			} else {
+				gfx3D.begin(perspective);
+				gfx3D.render(nullRenderable.getProvider(), space.getLighting());
+				gfx3D.end();
+				raster.render3D(perspective);
+				raster.render2D();
 			}
-
-			
-		} else {
-			preprocess();
+			gui.clearBuffer();
 		}
-		gui.clearBuffer();
 	}
 	
 	/**
 	 * Draw raster graphics and GUI to viewport space.
 	 */
 	void postprocess() {
-		raster.render2D();
 		raster.tick();
 		gui.render2D();
 	}

@@ -5,7 +5,6 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Random;
 
-import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
@@ -40,7 +39,7 @@ public final class VoxelEntityManager implements Disposable, Tickable {
 	/**
 	 * Entity Renderables.
 	 */
-	private Array<ModelInstance> renderables; 
+	private Array<VoxelEntity> renderables; 
 	
 	/**
 	 * Iterator for entities...
@@ -176,7 +175,7 @@ public final class VoxelEntityManager implements Disposable, Tickable {
 	/**
 	 * @return renderables of entities active within a VoxelSpace.
 	 */
-	public Array<ModelInstance> getRenderables() {
+	public Array<VoxelEntity> getRenderables() {
 		return renderables;
 	}
 

@@ -5,17 +5,15 @@ import java.util.Random;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.Input.Keys;
-import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
+import com.badlogic.gdx.graphics.g3d.environment.PointLight;
 
 import dev.iwilkey.voxar.asset.AssetType;
 import dev.iwilkey.voxar.asset.VoxarAsset;
 import dev.iwilkey.voxar.gfx.Raster25;
 import dev.iwilkey.voxar.gfx.RasterRenderer;
-import dev.iwilkey.voxar.gfx.VoxarRenderer;
 import dev.iwilkey.voxar.input.StandardInput;
 import dev.iwilkey.voxar.perspective.FreeController;
-import dev.iwilkey.voxar.physics.PhysicsBodyType;
-import dev.iwilkey.voxar.physics.PhysicsPrimitive;
 import dev.iwilkey.voxar.world.VoxelSpace;
 
 /**
@@ -36,11 +34,11 @@ public final class VoxarDebugWorld extends VoxarEngineState {
 
 	FreeController controller;
 	Raster25 test;
+	PointLight light;
 
 	@Override
 	public void begin() {
 		Gdx.input.setCursorCatched(true);
-		Gdx.input.setCursorPosition(VoxarRenderer.WW / 2, VoxarRenderer.WH / 2);
 		focused = true;
 		test = new Raster25(Gdx.files.internal("img/crosshair.png"));
 		setUpSpace();
@@ -54,13 +52,8 @@ public final class VoxarDebugWorld extends VoxarEngineState {
 	@Override
 	public void process() {
 		focus();
-		RasterRenderer.renderToVoxelWorld(test, 2, 2, 2, 1.0f, 1.0f, true);
-		
-		if(StandardInput.cursorJustDown(Buttons.LEFT)) {
-			long cube = getVoxelSpace().getEntityManager().addRigidbody("vox/cube/cube.vox.obj", random.nextInt(1, 100), PhysicsPrimitive.CUBOID, PhysicsBodyType.DYNAMIC);
-			getVoxelSpace().getEntityManager().getEntity(cube).setPosition(new Vector3(random.nextInt(-5, 5), random.nextInt(20, 40), random.nextInt(-5, 5)));
-		}
-		
+		RasterRenderer.renderRasterInWorldSpace(test, 2, 2, 2, 1.0f, 1.0f, true);
+		light.setPosition(getVoxelSpace().getRenderingPerspective().position);
 	}
 
 	@Override
@@ -81,15 +74,19 @@ public final class VoxarDebugWorld extends VoxarEngineState {
 	
 	void setUpSpace() {
 		setVoxelSpace(new VoxelSpace(this));
-		for(int x = -10; x < 10; x++) {
-			for(int z = -10; z < 10; z++) {
-				long cube = getVoxelSpace().getEntityManager().addRigidbody("vox/cube/cube.vox.obj", 0.0f, PhysicsPrimitive.CUBOID, PhysicsBodyType.STATIC);
-				getVoxelSpace().getEntityManager().getEntity(cube).setPosition(new Vector3(x, 0, z));
-			}
-		}
+		// Generate terrain (test).
 		
+		
+		// Set up space perspective.
 		controller = new FreeController();
 		getVoxelSpace().setPerspectiveController(controller);
+		
+		// Add some lights.
+		getVoxelSpace().getLighting().add(new DirectionalLight().set(1, 1, 1, -1f, -0.8f, -0.2f));
+		light = new PointLight().set(1f, 1f, 1f, getVoxelSpace().getRenderingPerspective().position.x, 
+				getVoxelSpace().getRenderingPerspective().position.y, getVoxelSpace().getRenderingPerspective().position.z, 5f);
+		getVoxelSpace().getLighting().add(light);
+		
 	}
 	
 	public boolean isFocused() {
