@@ -1,6 +1,8 @@
 package dev.iwilkey.voxar.gfx;
 
+import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.RenderableProvider;
+import com.badlogic.gdx.utils.Array;
 
 import dev.iwilkey.voxar.perspective.VoxelSpacePerspective;
 
@@ -29,6 +31,13 @@ public interface Renderable {
 	 * @return a RenderableProvider of this Renderable object.
 	 */
 	default public RenderableProvider getRenderableProvider() {
+		return null;
+	}
+	
+	/**
+	 * @return the RenderableProviders of this Renderable object.
+	 */
+	default public Array<ModelInstance> getRenderableProviders() {
 		return null;
 	}
 }

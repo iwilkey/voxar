@@ -14,7 +14,7 @@ import dev.iwilkey.voxar.gfx.Raster25;
 import dev.iwilkey.voxar.gfx.RasterRenderer;
 import dev.iwilkey.voxar.input.StandardInput;
 import dev.iwilkey.voxar.perspective.FreeController;
-import dev.iwilkey.voxar.world.VoxelSpace;
+import dev.iwilkey.voxar.space.VoxelSpace;
 
 /**
  * Implementation of a VoxarEngineState for testing and debugging new Voxar engine features.
@@ -52,7 +52,7 @@ public final class VoxarDebugWorld extends VoxarEngineState {
 	@Override
 	public void process() {
 		focus();
-		RasterRenderer.renderRasterInWorldSpace(test, 0, 0, 0, 1.0f, 1.0f, true);
+		RasterRenderer.renderRasterInWorldSpace(test, 0, 5, 0, 5.0f, 5.0f, true);
 		light.setPosition(getVoxelSpace().getRenderingPerspective().position);
 	}
 

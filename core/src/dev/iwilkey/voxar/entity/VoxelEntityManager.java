@@ -14,7 +14,7 @@ import dev.iwilkey.voxar.clock.Tickable;
 import dev.iwilkey.voxar.model.VoxelModel;
 import dev.iwilkey.voxar.physics.PhysicsBodyType;
 import dev.iwilkey.voxar.physics.PhysicsPrimitive;
-import dev.iwilkey.voxar.world.VoxelSpace;
+import dev.iwilkey.voxar.space.VoxelSpace;
 
 /**
  * A required core class for a VoxelSpace if the use of any VoxelEntity is desired. 

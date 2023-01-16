@@ -18,9 +18,9 @@ public class VoxarApplicationConfiguration extends Lwjgl3ApplicationConfiguratio
 	public static final float MIN_SCREEN_WIDTH_RATIO = 0.05f;
 	
 	/**
-	 * 35% of the primary display dimensions, the default size of a window in windowed mode.
+	 * 50% of the primary display dimensions, the default size of a window in windowed mode.
 	 */
-	public static final float DEFAULT_SCREEN_WIDTH_RATIO = 0.35f;
+	public static final float DEFAULT_SCREEN_WIDTH_RATIO = 0.50f;
 	
 	/**
 	 * Default aspect ratio of a Voxar application.

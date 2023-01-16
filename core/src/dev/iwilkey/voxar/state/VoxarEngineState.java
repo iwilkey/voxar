@@ -13,7 +13,7 @@ import dev.iwilkey.voxar.asset.exception.VoxarAssetNotReferenced;
 import dev.iwilkey.voxar.clock.Tickable;
 import dev.iwilkey.voxar.gfx.RenderResizable;
 import dev.iwilkey.voxar.model.VoxelModel;
-import dev.iwilkey.voxar.world.VoxelSpace;
+import dev.iwilkey.voxar.space.VoxelSpace;
 
 /**
  * A VoxarEngineState is an abstract implementation of the Voxar engine's capabilities. When a concrete extension of this

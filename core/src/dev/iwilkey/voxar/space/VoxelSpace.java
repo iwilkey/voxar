@@ -1,4 +1,4 @@
-package dev.iwilkey.voxar.world;
+package dev.iwilkey.voxar.space;
 
 import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.ModelCache;
@@ -16,6 +16,7 @@ import dev.iwilkey.voxar.perspective.Controller;
 import dev.iwilkey.voxar.perspective.VoxelSpacePerspective;
 import dev.iwilkey.voxar.physics.PhysicsEngine;
 import dev.iwilkey.voxar.state.VoxarEngineState;
+import dev.iwilkey.voxar.world.terrain.Terrain;
 
 /**
  * A three-dimensional environment with real-time lighting, real-time point shadows (coming soon), entity management, and dynamic physics.
@@ -77,7 +78,7 @@ public final class VoxelSpace implements Disposable, Tickable, RenderResizable {
 		// Initialize physics engine.
 		physicsEngine = new PhysicsEngine();
 		// Initialize terrain.
-		terrain = new Terrain(1);
+		terrain = new Terrain(12342, 50, 50, 10);
 	}
 	
 	/**
@@ -94,7 +95,7 @@ public final class VoxelSpace implements Disposable, Tickable, RenderResizable {
 		// Bake RenderableProviders (if any) into one draw call where possible.
 		renderables.begin(camera);
 		// renderables.add(culledRenderables);
-		renderables.add(terrain.getRenderableProvider());
+		renderables.add(terrain.getRenderableProviders());
 		renderables.end();
 	}
 	

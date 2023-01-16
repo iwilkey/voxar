@@ -23,8 +23,8 @@ import dev.iwilkey.voxar.gui.GuiModule;
 import dev.iwilkey.voxar.gui.GuiModuleContents;
 import dev.iwilkey.voxar.model.NullRenderableProvider;
 import dev.iwilkey.voxar.perspective.VoxelSpacePerspective;
+import dev.iwilkey.voxar.space.VoxelSpace;
 import dev.iwilkey.voxar.state.VoxarEngineState;
-import dev.iwilkey.voxar.world.VoxelSpace;
 import imgui.ImGui;
 import imgui.flag.ImGuiWindowFlags;
 
@@ -72,6 +72,8 @@ public final class VoxarRenderer implements Disposable, RenderResizable {
 	 * MSAA samples. 
 	 */
 	public static final int MSAA_SAMPLES = 0x03;
+	
+	public static final int GLOBAL_GL_LINE_WIDTH = 3;
 	
 	/*
 	 * Runtime variables.
@@ -143,6 +145,7 @@ public final class VoxarRenderer implements Disposable, RenderResizable {
 	public VoxarRenderer() {
 		// Set up LWJGL graphics
 		graphics = (Lwjgl3Graphics)Gdx.graphics;
+		Gdx.gl.glLineWidth(GLOBAL_GL_LINE_WIDTH);
 		window = graphics.getWindow();
 		Gdx.gl.glClearColor(0.1f, 0.1f, 0.1f, 1f);
 		WW = Gdx.graphics.getWidth();
