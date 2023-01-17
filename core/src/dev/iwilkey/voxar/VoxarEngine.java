@@ -6,7 +6,7 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 
 import dev.iwilkey.voxar.clock.Tickable;
-import dev.iwilkey.voxar.gfx.VoxarRenderer;
+import dev.iwilkey.voxar.gfx.Renderer;
 import dev.iwilkey.voxar.input.StandardInput;
 import dev.iwilkey.voxar.settings.KeyBinding;
 import dev.iwilkey.voxar.state.VoxarEngineState;
@@ -31,14 +31,14 @@ public final class VoxarEngine extends ApplicationAdapter implements Tickable {
 	 * GIT_VERSION is updated whenever a branch is committed to. It is formatted like <git branch>-<push #>.
 	 * Please note that the push number is changed directly before a branches commit-push sequence.
 	 */
-	public static final String GIT_VERSION = "master-p10";
+	public static final String GIT_VERSION = "master-p11";
 	
 	/**
 	 * ENGINE_VERSION is appended to whenever an update to the engine is released to GitHub or executable. An engine
 	 * update is defined as any modification, addition, subtraction, or optimization to Voxar that does not directly
 	 * effect gameplay.
 	 */
-	public static final String ENGINE_VERSION = "0.10";
+	public static final String ENGINE_VERSION = "0.11";
 	
 	/**
 	 * True if the Voxar engine is in an "idle" state, meaning there is no active state dictating its behavior.
@@ -56,9 +56,9 @@ public final class VoxarEngine extends ApplicationAdapter implements Tickable {
 	private VoxarEngineState state;
 	
 	/**
-	 * The Voxar engine's 2D, 3D, and GUI renderer.
+	 * The Voxar engine's 2D, 2.5D, 3D, and GUI renderer.
 	 */
-	private VoxarRenderer renderer;
+	private Renderer renderer;
 	
 	/**
 	 * The standard input processor of the Voxar engine.
@@ -81,7 +81,7 @@ public final class VoxarEngine extends ApplicationAdapter implements Tickable {
 	@Override
 	public void create() {
 		// Create renderer.
-		renderer = new VoxarRenderer();
+		renderer = new Renderer();
 		// Create and apply input processor.
 		input = new StandardInput(); 
 		Gdx.input.setInputProcessor(input);
@@ -90,11 +90,12 @@ public final class VoxarEngine extends ApplicationAdapter implements Tickable {
 		// Begin entry state.
 		this.state.init(this);
 		// Show the window.
-		GLFW.glfwShowWindow(renderer.getWindow().getWindowHandle());
+		GLFW.glfwShowWindow(renderer.getWindowHandle());
 	}
 	
 	@Override
 	public void tick() {
+		// State will never be null when this function is called.
 		state.tick();
 		input.tick();
 	}
@@ -110,23 +111,19 @@ public final class VoxarEngine extends ApplicationAdapter implements Tickable {
 			if(Gdx.input.getInputProcessor() == null)
 				Gdx.input.setInputProcessor(input);
 		}
-	
-		// If there is no state to render, the engine will be put in an "idle" state.
+		
 		if(this.state == null) {
-			renderer.renderNullState();
 			ENGINE_IDLE = true;
-			return;
-		} else ENGINE_IDLE = false;
-		// If the state has unloaded assets that need to be loaded, the engine will do so.
-		if(!this.state.isReady()) {
-			this.state.load();
-			renderer.loading(this.state.getStateName(), 
-					this.state.getAssetLoadPercentage());
-			return;
+		} else {
+			ENGINE_IDLE = false;
+			if(!this.state.isReady()) {
+				this.state.load();
+			} else {
+				tick();
+			}
 		}
-		// Tick and render.
-		tick();
-		renderer.renderState(this.state);
+		renderer.render(this.state);
+		
 	}
 	
 	@Override
@@ -144,7 +141,6 @@ public final class VoxarEngine extends ApplicationAdapter implements Tickable {
 		renderer.resetCameraGroupStrategy();
 		if(this.state != null) {
 			this.state.end();
-			// There is no need to keep the assets loaded of a state that is not in use.
 			this.state.unloadAssets();
 			this.state.dispose();
 		}
@@ -167,6 +163,8 @@ public final class VoxarEngine extends ApplicationAdapter implements Tickable {
 	
 	@Override
 	public void dispose() {
+		if(state != null)
+			state.dispose();
 		renderer.dispose();
 	}
 	

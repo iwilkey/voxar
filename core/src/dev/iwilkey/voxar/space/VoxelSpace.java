@@ -1,21 +1,15 @@
 package dev.iwilkey.voxar.space;
 
 import com.badlogic.gdx.graphics.g3d.Environment;
-import com.badlogic.gdx.graphics.g3d.ModelCache;
-import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
-import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.Disposable;
 
 import dev.iwilkey.voxar.clock.Tickable;
-import dev.iwilkey.voxar.entity.VoxelEntity;
 import dev.iwilkey.voxar.entity.VoxelEntityManager;
-import dev.iwilkey.voxar.gfx.FrustumCulling;
-import dev.iwilkey.voxar.gfx.RenderResizable;
-import dev.iwilkey.voxar.gfx.VoxarRenderer;
+import dev.iwilkey.voxar.gfx.RenderableProvider3D;
+import dev.iwilkey.voxar.gfx.Renderer;
 import dev.iwilkey.voxar.perspective.Controller;
-import dev.iwilkey.voxar.perspective.VoxelSpacePerspective;
+import dev.iwilkey.voxar.perspective.Perspective3D;
 import dev.iwilkey.voxar.physics.PhysicsEngine;
 import dev.iwilkey.voxar.space.terrain.Terrain;
 import dev.iwilkey.voxar.state.VoxarEngineState;
@@ -24,7 +18,7 @@ import dev.iwilkey.voxar.state.VoxarEngineState;
  * A three-dimensional environment with real-time lighting, real-time point shadows (coming soon), entity management, and dynamic physics.
  * @author iwilkey
  */
-public final class VoxelSpace implements Disposable, Tickable, RenderResizable {
+public final class VoxelSpace extends RenderableProvider3D implements Tickable {
 	
 	/**
 	 * The state that the VoxelSpace belongs to.
@@ -42,44 +36,17 @@ public final class VoxelSpace implements Disposable, Tickable, RenderResizable {
 	private final PhysicsEngine physicsEngine;
 	
 	/**
-	 * RenderableProvider of all active VoxelEntities, baked and optimized.
-	 */
-	private final ModelCache renderables;
-	
-	/**
-	 * List of RenderableProviders that are currently visable to the VoxelSpacePerspecive.
-	 */
-	private Array<ModelInstance> culledRenderables;
-	
-	/**
-	 * OpenGL lighting.
-	 */
-	private final Environment lighting;
-	
-	/**
 	 * Terrain.
 	 */
 	private Terrain terrain;
-	
-	/**
-	 * "Camera" that captures the VoxelSpace's Renderables from any perspective.
-	 */
-	private final VoxelSpacePerspective camera;
 
 	public VoxelSpace(VoxarEngineState operatingState) {
+		super(new Perspective3D(67, Renderer.WINDOW_WIDTH, Renderer.WINDOW_HEIGHT), new Environment());
 		this.operatingState = operatingState;
-		// Initialize the RenderableProvider.
-		renderables = new ModelCache();
-		culledRenderables = new Array<>();
 		
-		// Lighting and shadows.
-		lighting = new Environment();
-		lighting.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.6f, 0.6f, 0.6f, 1f));
-		lighting.set(new ColorAttribute(ColorAttribute.Fog, 0.1f, 0.1f, 0.1f, 1f));
-		lighting.add(new DirectionalLight().set(1f, 1f, 1f, -1, -1, -1));
-		
-		// Initialize and configure the camera.
-		camera = new VoxelSpacePerspective(67, VoxarRenderer.WW, VoxarRenderer.WH);
+		getRenderingEnvironment().set(new ColorAttribute(ColorAttribute.AmbientLight, 0.6f, 0.6f, 0.6f, 1f));
+		getRenderingEnvironment().set(new ColorAttribute(ColorAttribute.Fog, 0.1f, 0.1f, 0.1f, 1f));
+		getRenderingEnvironment().add(new DirectionalLight().set(1f, 1f, 1f, -1, -1, -1));
 		
 		// Initialize entity manager.
 		entityManager = new VoxelEntityManager(this);
@@ -91,51 +58,11 @@ public final class VoxelSpace implements Disposable, Tickable, RenderResizable {
 		terrain = null;
 	}
 	
-	/**
-	 * Bake and optimize RenderableProviders active in the VoxelSpace.
-	 * @param entities active RenderableProviders.
-	 */
-	protected void optimizeAndProvideRenderables() {
-		
-		culledRenderables.clear();
-		
-		// Cull entities.
-		if(entityManager.getRenderableEntityProviders().size != 0) {
-			for(final VoxelEntity e : entityManager.getRenderableEntityProviders()) 
-				if(FrustumCulling.sphericalTestWith(e, camera))
-					culledRenderables.add(e);
-		}
-		
-		// Cull terrain chunks (if terrain exists).
-		if(terrain != null) {
-			for(final ModelInstance t : terrain.getRenderableProviders()) {
-				if(FrustumCulling.cuboidTestWith(t, camera))
-					culledRenderables.add(t);
-			}
-		}
-		
-		// Add culled RenderableProviders to Space renderables.
-		if(culledRenderables.size != 0) {
-			renderables.begin(camera);
-			renderables.add(culledRenderables);
-			renderables.end();
-		}
-		
-	}
-	
 	@Override
 	public void tick() {
-		camera.tick();
+		getRenderingPerspective().tick();
 		physicsEngine.tick();
 		entityManager.tick();
-		optimizeAndProvideRenderables();
-	}
-	
-	@Override
-	public void windowResizeCallback(int nw, int nh) {
-		camera.viewportWidth = nw;
-		camera.viewportHeight = nh;
-		camera.update();
 	}
 	
 	/**
@@ -143,15 +70,19 @@ public final class VoxelSpace implements Disposable, Tickable, RenderResizable {
 	 * @param controller the controller.
 	 */
 	public void setPerspectiveController(Controller controller) {
-		camera.setController(controller);
+		getRenderingPerspective().setController(controller);
 	}
 	
 	/**
-	 * Set a terrain object to the VoxelSpace.
-	 * @param terrain the terrain object.
+	 * Create a terrain inside VoxelSpace.
+	 * @param seed a value that all procedural generation will be based on.
+	 * @param globalChunkScale the world distance of each line connecting any two vertices. 
+	 * @param globalHeightMapAmplifier The scale of the generated height map.
+	 * @param globalChunkApothem The perpendicular distance of the center of the chunk to any side. Keep in mind, chunk area = (apothem * 2)^2! This shouldn't be set too high
+	 * for performance reasons.
 	 */
-	public void setTerrain(Terrain terrain) {
-		this.terrain = terrain;
+	public void createTerrain(double seed, long chunkScale, long heightMap, int chunkApothem) {
+		terrain = new Terrain(this, seed, chunkScale, heightMap, chunkApothem);
 	}
 	
 	/**
@@ -159,48 +90,6 @@ public final class VoxelSpace implements Disposable, Tickable, RenderResizable {
 	 */
 	public PhysicsEngine getPhysicsEngine() {
 		return physicsEngine;
-	}
-	
-	/**
-	 * @return the VoxelSpace's camera.
-	 */
-	public VoxelSpacePerspective getRenderingPerspective() {
-		return camera;
-	}
-	
-	/**
-	 * @return a baked and optimized RenderableProvider.
-	 */
-	public ModelCache getRenderables() {
-		return renderables;
-	}
-	
-	/**
-	 * @return iterative entity Renderables.
-	 */
-	public Array<VoxelEntity> getRawRenderables() {
-		return entityManager.getRenderableEntityProviders();
-	}
-	
-	/**
-	 * @return return RenderableProviders visible through the VoxelSpacePerspective.
-	 */
-	public Array<ModelInstance> getCulledRenderables() {
-		return culledRenderables;
-	}
-	
-	/**
-	 * @return the amount of RenderableProviders that should be rendered this frame.
-	 */
-	public long getCulledRenderablesSize() {
-		return culledRenderables.size;
-	}
-	
-	/**
-	 * @return the lighting and shadow configuration of the VoxelSpace.
-	 */
-	public Environment getLighting() {
-		return lighting;
 	}
 	
 	/**
@@ -219,12 +108,11 @@ public final class VoxelSpace implements Disposable, Tickable, RenderResizable {
 
 	@Override
 	public void dispose() {
-		physicsEngine.dispose();
+		super.dispose();
 		if(terrain != null)
 			terrain.dispose();
-		renderables.dispose();
+		physicsEngine.dispose();
 		entityManager.dispose();
-		camera.dispose();
 	}
 	
 }

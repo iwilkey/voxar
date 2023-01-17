@@ -38,7 +38,7 @@ public final class NullRenderableProvider {
 	/**
 	 * @return OpenGL's reason to use default shader when no RenderableProviders are active.
 	 */
-	public RenderableProvider getProvider() {
+	public RenderableProvider getRenderableProvider() {
 		return renderable;
 	}
 	

@@ -5,7 +5,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
 
 import dev.iwilkey.voxar.entity.VoxelEntity;
-import dev.iwilkey.voxar.perspective.VoxelSpacePerspective;
+import dev.iwilkey.voxar.perspective.Perspective3D;
 
 /**
  * Utility class to perform 3D frustum culling for any active RenderableProvider in a VoxelSpace.
@@ -19,7 +19,7 @@ public final class FrustumCulling {
 	 * @param camera the camera.
 	 * @return whether or not the instance is visible in the camera's frustum using an encapsulating sphere.
 	 */
-	public static boolean sphericalTestWith(ModelInstance instance, VoxelSpacePerspective camera) {
+	public static boolean sphericalTestWith(ModelInstance instance, Perspective3D camera) {
 		// If the entity is a VoxelEntity, this test can be performed much faster.
 		if(instance instanceof VoxelEntity) {
 			Vector3 position = Vector3.Zero;
@@ -51,7 +51,7 @@ public final class FrustumCulling {
 	 * @param camera the camera.
 	 * @return whether or not the instance is visible in the camera's frustum using an encapsulating cuboid.
 	 */
-	public static boolean cuboidTestWith(ModelInstance instance, VoxelSpacePerspective camera) {
+	public static boolean cuboidTestWith(ModelInstance instance, Perspective3D camera) {
 		// If the entity is a VoxelEntity, this test can be performed much faster.
 		if(instance instanceof VoxelEntity) {
 			Vector3 position = Vector3.Zero;

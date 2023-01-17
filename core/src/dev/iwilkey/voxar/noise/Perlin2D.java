@@ -4,7 +4,7 @@ package dev.iwilkey.voxar.noise;
  * An implementation of Ken Perlin's gradient noise generation in 2D.
  * @author iwilkey
  */
-public class Perlin2D {
+public final class Perlin2D {
 	
 	/**
 	 * Ken's original permutation array for selecting gradient vectors.

@@ -9,5 +9,5 @@ public interface PerspectiveController {
 	 * Move / rotate the camera. Called every tick.
 	 * @param perspective the camera.
 	 */
-	public void control(VoxelSpacePerspective perspective);
+	public void control(Perspective3D perspective);
 }

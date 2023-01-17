@@ -39,7 +39,7 @@ public final class GuiModule {
 	 * Render the GuiModule with optional arguments.
 	 * @param args data to pass.
 	 */
-	public void render(String... args) {
+	public void show(String... args) {
 		ImGui.begin(name, flags);
 		contents.contents(args);
 		ImGui.end();
@@ -50,7 +50,7 @@ public final class GuiModule {
 	 * @param anchor a specified Anchor.
 	 * @param args data to pass.
 	 */
-	public void render(Anchor anchor, String... args) {
+	public void show(Anchor anchor, String... args) {
 		ImGui.begin(name, flags);
 		GuiAlignment.align(anchor);
 		contents.contents(args);
@@ -64,7 +64,7 @@ public final class GuiModule {
 	 * @param offY offset in the y direction.
 	 * @param args data to pass.
 	 */
-	public void render(Anchor anchor, int offX, int offY, String... args) {
+	public void show(Anchor anchor, int offX, int offY, String... args) {
 		ImGui.begin(name, flags);
 		GuiAlignment.align(anchor, offX, offY);
 		contents.contents(args);
@@ -77,7 +77,7 @@ public final class GuiModule {
 	 * @param lerpCenter linear interpolation percentage.
 	 * @param args data to pass.
 	 */
-	public void render(Anchor anchor, float lerpCenter, String... args) {
+	public void show(Anchor anchor, float lerpCenter, String... args) {
 		ImGui.begin(name, flags);
 		GuiAlignment.align(anchor, lerpCenter);
 		contents.contents(args);

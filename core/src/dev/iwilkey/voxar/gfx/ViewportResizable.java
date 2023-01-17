@@ -4,7 +4,7 @@ package dev.iwilkey.voxar.gfx;
  * Interface for objects requiring a callback when the application window is resized. 
  * @author iwilkey
  */
-public interface RenderResizable {
+public interface ViewportResizable {
 	/**
 	 * Called when the application window resizes.
 	 * @param nw new width, in pixels

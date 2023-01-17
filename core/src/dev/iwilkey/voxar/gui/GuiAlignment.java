@@ -1,6 +1,7 @@
 package dev.iwilkey.voxar.gui;
 
-import dev.iwilkey.voxar.gfx.VoxarRenderer;
+import dev.iwilkey.voxar.gfx.Renderer;
+
 import imgui.ImGui;
 import imgui.ImVec2;
 
@@ -18,8 +19,8 @@ public final class GuiAlignment {
 	 */
 	public static ImVec2 anchorTo(ImVec2 dimensions, Anchor anchor) {
 		ImVec2 ret = new ImVec2(-1, -1);
-		final int ww = VoxarRenderer.WW;
-		final int hh = VoxarRenderer.WH;
+		final int ww = Renderer.WINDOW_WIDTH;
+		final int hh = Renderer.WINDOW_HEIGHT;
 		final int cax = ww / 2;
 		final int cay = hh / 2;
 		final int dx = (int)dimensions.x;

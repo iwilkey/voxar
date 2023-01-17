@@ -7,8 +7,7 @@ import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.Vector3;
 
 import dev.iwilkey.voxar.gfx.Raster2;
-import dev.iwilkey.voxar.gfx.RasterRenderer;
-import dev.iwilkey.voxar.gfx.VoxarRenderer;
+import dev.iwilkey.voxar.gfx.Renderer;
 import dev.iwilkey.voxar.input.StandardInput;
 import dev.iwilkey.voxar.settings.KeyBinding;
 
@@ -71,7 +70,7 @@ public final class FreeController extends Controller {
 	}
 	
 	@Override
-	public void control(VoxelSpacePerspective perspective) {
+	public void control(Perspective3D perspective) {
 		// Update position no matter if active or not.
 		perspective.position.interpolate(target, translationSmoothingConstant, translationInterpolationType);
 		
@@ -117,9 +116,11 @@ public final class FreeController extends Controller {
 	 * Render the crosshair to the screen using the RasterRenderer.
 	 */
 	private void renderCrosshair() {
-		final int x = (VoxarRenderer.WW / 2) - (crosshairDim / 2);
-		final int y = (VoxarRenderer.WH / 2) - (crosshairDim / 2);
-		RasterRenderer.renderRasterInViewportSpace(crosshair, x, y, crosshairDim, crosshairDim);
+		/*
+		final int x = (Renderer.WW / 2) - (crosshairDim / 2);
+		final int y = (Renderer.WH / 2) - (crosshairDim / 2);
+		// RasterRenderer.renderRasterInViewportSpace(crosshair, x, y, crosshairDim, crosshairDim);
+		 */
 	}
 	
 	/**

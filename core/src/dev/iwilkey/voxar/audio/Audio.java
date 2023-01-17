@@ -1,15 +1,10 @@
 package dev.iwilkey.voxar.audio;
 
 /**
- * Voxar engine audio manager.
+ * Voxar engine's OpenAL manager.
  * @author iwilkey
- *
  */
 public final class Audio {
-	
-	/*
-	 * OpenAL configuration.
-	 */
 	
 	/**
 	 * The maximum number of sources that can be played simultaneously.

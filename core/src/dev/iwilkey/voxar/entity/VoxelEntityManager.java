@@ -11,9 +11,11 @@ import com.badlogic.gdx.utils.Disposable;
 
 import dev.iwilkey.voxar.asset.exception.VoxarAssetNotReferenced;
 import dev.iwilkey.voxar.clock.Tickable;
+import dev.iwilkey.voxar.gfx.RenderableProvider3D;
 import dev.iwilkey.voxar.model.VoxelModel;
 import dev.iwilkey.voxar.physics.PhysicsBodyType;
 import dev.iwilkey.voxar.physics.PhysicsPrimitive;
+import dev.iwilkey.voxar.physics.VoxarPhysicsTag;
 import dev.iwilkey.voxar.space.VoxelSpace;
 
 /**
@@ -22,7 +24,7 @@ import dev.iwilkey.voxar.space.VoxelSpace;
  * active within a VoxelSpace.
  * @author iwilkey
  */
-public final class VoxelEntityManager implements Disposable, Tickable {
+public final class VoxelEntityManager extends RenderableProvider3D implements Disposable, Tickable {
 	
 	private static final Random random = new Random();
 	
@@ -37,11 +39,6 @@ public final class VoxelEntityManager implements Disposable, Tickable {
 	private HashMap<Long, VoxelEntity> activeEntities;
 	
 	/**
-	 * Entity Renderables.
-	 */
-	private Array<VoxelEntity> renderables; 
-	
-	/**
 	 * Iterator for entities...
 	 */
 	private Iterator<Entry<Long, VoxelEntity>> entityIterator;
@@ -52,10 +49,10 @@ public final class VoxelEntityManager implements Disposable, Tickable {
 	private Array<VoxelEntity> trash;
 	
 	public VoxelEntityManager(VoxelSpace operatingSpace) {
+		super(operatingSpace.getRenderingPerspective(), operatingSpace.getRenderingEnvironment());
 		this.operatingSpace = operatingSpace;
 		activeEntities = new HashMap<>();
 		entityIterator = activeEntities.entrySet().iterator();
-		renderables = new Array<>();
 		trash = new Array<>();
 	}
 	
@@ -101,7 +98,7 @@ public final class VoxelEntityManager implements Disposable, Tickable {
 			}
 			e.dispose();
 			activeEntities.remove(e.getUID());
-			renderables.removeValue(e, false);
+			abortInstance(e);
 		}
 		trash.clear();
 	}
@@ -122,7 +119,7 @@ public final class VoxelEntityManager implements Disposable, Tickable {
 		VoxelEntity e = new VoxelEntity(model.getModel(), model.getName());
 		e.setUID(findUID());
 		activeEntities.put(e.getUID(), e);
-		renderables.add(e);
+		registerInstance(e);
 		if(e instanceof Viable)
 			((Viable)e).spawn();
 		return e.getUID();
@@ -144,10 +141,10 @@ public final class VoxelEntityManager implements Disposable, Tickable {
 			e1.printStackTrace();
 			System.exit(-1);
 		}
-		VoxelRigidbody e = new VoxelRigidbody(model.getModel(), model.getName(), mass, primitive, bodyType);
+		VoxelRigidbody e = new VoxelRigidbody(model.getModel(), model.getName(), mass, primitive, bodyType, VoxarPhysicsTag.ALL);
 		e.setUID(findUID());
 		activeEntities.put(e.getUID(), e);
-		renderables.add(e);
+		registerInstance(e);
 		if(e instanceof Viable)
 			((Viable)e).spawn();
 		e.getBody().proceedToTransform(e.transform);
@@ -170,13 +167,6 @@ public final class VoxelEntityManager implements Disposable, Tickable {
 	 */
 	public boolean verifyExistance(long uid) {
 		return activeEntities.containsKey(uid);
-	}
-	
-	/**
-	 * @return renderables of entities active within a VoxelSpace.
-	 */
-	public Array<VoxelEntity> getRenderableEntityProviders() {
-		return renderables;
 	}
 
 	@Override

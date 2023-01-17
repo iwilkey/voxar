@@ -10,15 +10,14 @@ import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.utils.Disposable;
-import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder.VertexInfo;
 
-import dev.iwilkey.voxar.gfx.Renderable;
+import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder.VertexInfo;
 
 /**
  * A manageable subset, or chunk, of a Terrain object.
  * @author iwilkey
  */
-public final class TerrainChunk implements Renderable, Disposable {
+public final class TerrainChunk implements Disposable {
 	
 	private static final int DEEP_COLOR = 0xbbbbbbff;
 	private static final int HIGH_COLOR = 0xffffffff;
@@ -40,9 +39,8 @@ public final class TerrainChunk implements Renderable, Disposable {
 	 */
 	private long chunkZ;
 	
-	// Renderables.
+	// Renderable model.
 	private Model model;
-	private ModelInstance renderable;
 	
 	public TerrainChunk(Terrain terrain, long chunkX, long chunkZ) {
 		this.terrain = terrain;
@@ -107,7 +105,7 @@ public final class TerrainChunk implements Renderable, Disposable {
 			}
 		}
 		model = modelBuilder.end();
-		renderable = new ModelInstance(model);
+		terrain.registerInstance(new ModelInstance(model));
 	}
 	
 	/**
@@ -137,12 +135,8 @@ public final class TerrainChunk implements Renderable, Disposable {
 	public Model getChunkModel() {
 		return model;
 	}
-	
-	@Override
-	public ModelInstance getRenderableProvider() {
-		return renderable;
-	}
-	
+
+
 	@Override
 	public void dispose() {
 		model.dispose();

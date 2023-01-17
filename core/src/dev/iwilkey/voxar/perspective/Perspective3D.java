@@ -10,14 +10,20 @@ import dev.iwilkey.voxar.clock.Tickable;
  * An abstraction of PerspectiveCamera, adding high-level control of the rendering perspective of a VoxelSpace through Controllers.
  * @author iwilkey
  */
-public final class VoxelSpacePerspective extends PerspectiveCamera implements Tickable, Disposable {
+public final class Perspective3D extends PerspectiveCamera implements Tickable, Disposable {
 	
 	/**
 	 * Current perspective controller.
 	 */
 	Controller controller;
-
-	public VoxelSpacePerspective(int fov, int viewportWidth, int viewportHeight) {
+	
+	/**
+	 * A new VoxelSpacePerspective object.
+	 * @param fov the "field-of-view" value.
+	 * @param viewportWidth the width of the rendering viewport.
+	 * @param viewportHeight the height of the rendering viewport.
+	 */
+	public Perspective3D(int fov, int viewportWidth, int viewportHeight) {
 		super(fov, viewportWidth, viewportHeight);
 		position.set(0, 2, 0);
 		direction.set(Vector3.X);

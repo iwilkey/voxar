@@ -19,6 +19,7 @@ import dev.iwilkey.voxar.physics.PhysicsEngine;
 import dev.iwilkey.voxar.physics.PhysicsPrimitive;
 import dev.iwilkey.voxar.physics.UniqueMotion;
 import dev.iwilkey.voxar.physics.UniqueTransformProcess;
+import dev.iwilkey.voxar.physics.VoxarPhysicsTag;
 import dev.iwilkey.voxar.physics.vRigidBody;
 
 /**
@@ -57,7 +58,7 @@ public class VoxelRigidbody extends VoxelEntity {
 	 */
 	private Vector3 localInertia = new Vector3();
 
-	public VoxelRigidbody(Model model, String name, float mass, PhysicsPrimitive primitive, PhysicsBodyType bodyType) {
+	public VoxelRigidbody(Model model, String name, float mass, PhysicsPrimitive primitive, PhysicsBodyType bodyType, VoxarPhysicsTag tag) {
 		super(model, name);
 		this.mass = mass;
 		
@@ -95,6 +96,8 @@ public class VoxelRigidbody extends VoxelEntity {
 		constructionInfo = new btRigidBody.btRigidBodyConstructionInfo(mass, null, shape, localInertia);
 		body = new vRigidBody(constructionInfo);
 		constructionInfo.dispose();
+		
+		body.setTag(tag);
 		
 		// Create a new UniqueMotion object and assign it to the VoxelRigidbody.
 		uniqueMotion = new UniqueMotion(getUID());

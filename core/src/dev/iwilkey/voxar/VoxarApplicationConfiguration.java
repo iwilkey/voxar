@@ -4,7 +4,7 @@ import com.badlogic.gdx.Graphics.DisplayMode;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
 
 import dev.iwilkey.voxar.audio.Audio;
-import dev.iwilkey.voxar.gfx.VoxarRenderer;
+import dev.iwilkey.voxar.gfx.Renderer;
 
 /**
  * Default application environment configuration for any Voxar application.
@@ -62,13 +62,13 @@ public class VoxarApplicationConfiguration extends Lwjgl3ApplicationConfiguratio
 		this.setInitialVisible(false);
 		
 		// Set up OpenGL back buffer.
-		this.setBackBufferConfig(VoxarRenderer.RED_BITS, 
-				VoxarRenderer.GREEN_BITS, 
-				VoxarRenderer.BLUE_BITS, 
-				VoxarRenderer.ALPHA_BITS, 
-				VoxarRenderer.DEPTH_BITS, 
-				VoxarRenderer.STENCIL_BITS, 
-				VoxarRenderer.MSAA_SAMPLES);
+		this.setBackBufferConfig(Renderer.RED_BITS, 
+				Renderer.GREEN_BITS, 
+				Renderer.BLUE_BITS, 
+				Renderer.ALPHA_BITS, 
+				Renderer.DEPTH_BITS, 
+				Renderer.STENCIL_BITS, 
+				Renderer.MSAA_SAMPLES);
 		
 		// Enable OpenGL debug output.
 		this.enableGLDebugOutput(true, System.out);

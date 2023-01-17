@@ -9,6 +9,8 @@ public enum VoxarPhysicsTag {
 	/**
 	 * Every Voxar VoxelRigidbody.
 	 */
-	ALL
+	ALL,
+	
+	TERRAIN
 	
 }

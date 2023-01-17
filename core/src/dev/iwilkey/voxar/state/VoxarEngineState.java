@@ -11,7 +11,7 @@ import dev.iwilkey.voxar.asset.VoxarAsset;
 import dev.iwilkey.voxar.asset.exception.VoxarAssetNotFound;
 import dev.iwilkey.voxar.asset.exception.VoxarAssetNotReferenced;
 import dev.iwilkey.voxar.clock.Tickable;
-import dev.iwilkey.voxar.gfx.RenderResizable;
+import dev.iwilkey.voxar.gfx.ViewportResizable;
 import dev.iwilkey.voxar.model.VoxelModel;
 import dev.iwilkey.voxar.space.VoxelSpace;
 
@@ -20,7 +20,7 @@ import dev.iwilkey.voxar.space.VoxelSpace;
  * class is created, the Voxar engine can use it to dictate how it behaves.
  * @author iwilkey
  */
-public abstract class VoxarEngineState implements Disposable, Tickable, RenderResizable {
+public abstract class VoxarEngineState implements Disposable, Tickable, ViewportResizable {
 	
 	/**
 	 * A list of assets that exist in the "dev.iwilkey.Voxar.asset.VoxarAsset.java" enumeration.
