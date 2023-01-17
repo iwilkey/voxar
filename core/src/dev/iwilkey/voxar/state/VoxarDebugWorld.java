@@ -5,7 +5,6 @@ import java.util.Random;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.Input.Keys;
-import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.environment.PointLight;
 
 import dev.iwilkey.voxar.asset.AssetType;
@@ -14,7 +13,10 @@ import dev.iwilkey.voxar.gfx.Raster25;
 import dev.iwilkey.voxar.gfx.RasterRenderer;
 import dev.iwilkey.voxar.input.StandardInput;
 import dev.iwilkey.voxar.perspective.FreeController;
+import dev.iwilkey.voxar.physics.PhysicsBodyType;
+import dev.iwilkey.voxar.physics.PhysicsPrimitive;
 import dev.iwilkey.voxar.space.VoxelSpace;
+import dev.iwilkey.voxar.space.terrain.Terrain;
 
 /**
  * Implementation of a VoxarEngineState for testing and debugging new Voxar engine features.
@@ -33,14 +35,14 @@ public final class VoxarDebugWorld extends VoxarEngineState {
 	}
 
 	FreeController controller;
-	Raster25 test;
+	Raster25 zeroZeroMarker;
 	PointLight light;
 
 	@Override
 	public void begin() {
 		Gdx.input.setCursorCatched(true);
 		focused = true;
-		test = new Raster25(Gdx.files.internal("img/crosshair.png"));
+		zeroZeroMarker = new Raster25(Gdx.files.internal("img/crosshair.png"));
 		setUpSpace();
 	}
 	
@@ -52,8 +54,14 @@ public final class VoxarDebugWorld extends VoxarEngineState {
 	@Override
 	public void process() {
 		focus();
-		RasterRenderer.renderRasterInWorldSpace(test, 0, 5, 0, 5.0f, 5.0f, true);
+		RasterRenderer.renderRasterInWorldSpace(zeroZeroMarker, 0, 5, 0, 5.0f, 5.0f, true);
 		light.setPosition(getVoxelSpace().getRenderingPerspective().position);
+		
+		if(StandardInput.cursorJustDown(Buttons.LEFT)) {
+			long cube = getVoxelSpace().getEntityManager().addRigidbody("vox/cube/cube.vox.obj", 1.0f, PhysicsPrimitive.CUBOID, PhysicsBodyType.DYNAMIC);
+			getVoxelSpace().getEntityManager().getEntity(cube).setPosition(getVoxelSpace().getRenderingPerspective().position.cpy().add(0, 10.0f, 0));
+		}
+		
 	}
 
 	@Override
@@ -74,18 +82,19 @@ public final class VoxarDebugWorld extends VoxarEngineState {
 	
 	void setUpSpace() {
 		setVoxelSpace(new VoxelSpace(this));
-		// Generate terrain (test).
-		
+		double terrainSeed = 1000;
+		long globalChunkScale = 10L;
+		long globalHeightAmp = 100L;
+		int globalChunkApothem = 10;
+		getVoxelSpace().setTerrain(new Terrain(getVoxelSpace(), terrainSeed, globalChunkScale, globalHeightAmp, globalChunkApothem));
 		
 		// Set up space perspective.
 		controller = new FreeController();
 		getVoxelSpace().setPerspectiveController(controller);
 		
-		// Add some lights.
-		getVoxelSpace().getLighting().add(new DirectionalLight().set(1, 1, 1, -1f, -0.8f, -0.2f));
-		light = new PointLight().set(1f, 1f, 1f, getVoxelSpace().getRenderingPerspective().position.x, 
-				getVoxelSpace().getRenderingPerspective().position.y, getVoxelSpace().getRenderingPerspective().position.z, 40f);
-		getVoxelSpace().getLighting().add(light);
+		// Add a point light to follow camera.
+		light = new PointLight().set(0.8f, 1f, 1f, getVoxelSpace().getRenderingPerspective().position.x, 
+				getVoxelSpace().getRenderingPerspective().position.y, getVoxelSpace().getRenderingPerspective().position.z, 10f);
 		
 	}
 	

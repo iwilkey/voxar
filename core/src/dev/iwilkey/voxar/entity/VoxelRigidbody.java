@@ -2,6 +2,7 @@ package dev.iwilkey.voxar.entity;
 
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.physics.bullet.Bullet;
 import com.badlogic.gdx.physics.bullet.collision.Collision;
 import com.badlogic.gdx.physics.bullet.collision.btBoxShape;
 import com.badlogic.gdx.physics.bullet.collision.btCapsuleShape;
@@ -76,6 +77,9 @@ public class VoxelRigidbody extends VoxelEntity {
 			case CAPSULE:
 				shape = new btCapsuleShape(bounds.x / 2f, bounds.y / 2f);
 				break;
+			case MESH:
+				shape = Bullet.obtainStaticNodeShape(model.nodes);
+				break;
 			default:;
 				shape = new btCylinderShape(new Vector3(bounds.x / 2f, bounds.y / 2f, bounds.z / 2f));
 				break;
@@ -90,6 +94,7 @@ public class VoxelRigidbody extends VoxelEntity {
 		// Construct the btRigidBody with the construction info.
 		constructionInfo = new btRigidBody.btRigidBodyConstructionInfo(mass, null, shape, localInertia);
 		body = new vRigidBody(constructionInfo);
+		constructionInfo.dispose();
 		
 		// Create a new UniqueMotion object and assign it to the VoxelRigidbody.
 		uniqueMotion = new UniqueMotion(getUID());
@@ -150,7 +155,6 @@ public class VoxelRigidbody extends VoxelEntity {
 	public void dispose() {
 		body.dispose();
 		uniqueMotion.dispose();
-		constructionInfo.dispose();
 	}
 
 }

@@ -1,4 +1,4 @@
-package dev.iwilkey.voxar.world.terrain;
+package dev.iwilkey.voxar.space.terrain;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.VertexAttributes.Usage;
 import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
+import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.utils.Disposable;
@@ -19,9 +20,10 @@ import dev.iwilkey.voxar.gfx.Renderable;
  */
 public final class TerrainChunk implements Renderable, Disposable {
 	
-	private static final int DEEP_COLOR = 0x000000ff;
-	private static final int HIGH_COLOR = 0x00ff00ff;
-	// private static final int MESH_OUTLINE_COLOR = 0xffffffff;
+	private static final int DEEP_COLOR = 0xbbbbbbff;
+	private static final int HIGH_COLOR = 0xffffffff;
+	@SuppressWarnings("unused")
+	private static final int MESH_OUTLINE_COLOR = 0xffffffff;
 	
 	/**
 	 * Parent terrain.
@@ -40,7 +42,7 @@ public final class TerrainChunk implements Renderable, Disposable {
 	
 	// Renderables.
 	private Model model;
-	private ModelInstance instance;
+	private ModelInstance renderable;
 	
 	public TerrainChunk(Terrain terrain, long chunkX, long chunkZ) {
 		this.terrain = terrain;
@@ -58,6 +60,7 @@ public final class TerrainChunk implements Renderable, Disposable {
 	private void generate() {
 		ModelBuilder modelBuilder = new ModelBuilder();
 		modelBuilder.begin();
+		modelBuilder.node().id = "chunk";
 		MeshPartBuilder meshBuilder;
 		final long unit = terrain.getGlobalChunkScale();
 		final long dim = (terrain.getGlobalChunkApothem() * unit);
@@ -65,37 +68,46 @@ public final class TerrainChunk implements Renderable, Disposable {
 		for(long x = chunkX - dim; x < chunkX + dim; x += unit) {
 			for(long z = chunkZ - dim; z < chunkZ + dim; z += unit) {
 				
-				String meshName = "chunk_" + Long.toString(chunkX) + "_" + Long.toString(chunkZ) + "_loc_" + Long.toString(x) + "_" + Long.toString(z);
+				String meshName = "terrainchunk_" + Long.toString(chunkX) + "_" + Long.toString(chunkZ) + "_loc_" + Long.toString(x) + "_" + Long.toString(z);
 				
 				float xx = x + unit;
 				float zz = z + unit;
 				
 				// Generate vertices for loc.
-				float hnlcv = Math.abs((float)terrain.getGenerationNoise().getNoise2(x, z)) * terrain.getGlobalHeightMapAmplifier();
-				float hflcv = Math.abs((float)terrain.getGenerationNoise().getNoise2(x, zz)) * terrain.getGlobalHeightMapAmplifier();
-				float hfrcv = Math.abs((float)terrain.getGenerationNoise().getNoise2(xx, zz)) * terrain.getGlobalHeightMapAmplifier();
-				float hnrcv = Math.abs((float)terrain.getGenerationNoise().getNoise2(xx, z)) * terrain.getGlobalHeightMapAmplifier();
+				float hnlcv = Math.abs((float)terrain.getGenerationNoise().getNoiseAt(x, z)) * terrain.getGlobalHeightMapAmplifier();
+				float hflcv = Math.abs((float)terrain.getGenerationNoise().getNoiseAt(x, zz)) * terrain.getGlobalHeightMapAmplifier();
+				float hfrcv = Math.abs((float)terrain.getGenerationNoise().getNoiseAt(xx, zz)) * terrain.getGlobalHeightMapAmplifier();
+				float hnrcv = Math.abs((float)terrain.getGenerationNoise().getNoiseAt(xx, z)) * terrain.getGlobalHeightMapAmplifier();
 				
 				VertexInfo nlcv = new VertexInfo().setPos(x, hnlcv, z).setNor(0, 1, 0)
-						.setCol(new Color(interpolateColors(DEEP_COLOR, HIGH_COLOR, hnlcv)));
+						.setCol(new Color(interpolateColors(DEEP_COLOR, HIGH_COLOR, hnlcv / terrain.getGlobalHeightMapAmplifier())));
 				VertexInfo flcv = new VertexInfo().setPos(x, hflcv, zz).setNor(0, 1, 0)
-						.setCol(new Color(interpolateColors(DEEP_COLOR, HIGH_COLOR, hflcv)));
+						.setCol(new Color(interpolateColors(DEEP_COLOR, HIGH_COLOR, hflcv / terrain.getGlobalHeightMapAmplifier())));
 				VertexInfo frcv = new VertexInfo().setPos(xx, hfrcv, zz).setNor(0, 1, 0)
-						.setCol(new Color(interpolateColors(DEEP_COLOR, HIGH_COLOR, hfrcv)));
+						.setCol(new Color(interpolateColors(DEEP_COLOR, HIGH_COLOR, hfrcv / terrain.getGlobalHeightMapAmplifier())));
 				VertexInfo nrcv = new VertexInfo().setPos(xx, hnrcv, z).setNor(0, 1, 0)
-						.setCol(new Color(interpolateColors(DEEP_COLOR, HIGH_COLOR, hnrcv)));
+						.setCol(new Color(interpolateColors(DEEP_COLOR, HIGH_COLOR, hnrcv / terrain.getGlobalHeightMapAmplifier())));
 				
 				// Triangle render (colored, filled in).
-				meshBuilder = modelBuilder.part(meshName, GL20.GL_TRIANGLES, Usage.Position | Usage.Normal | Usage.ColorUnpacked, new Material());
+				meshBuilder = modelBuilder.part(meshName, GL20.GL_TRIANGLES, Usage.Position | Usage.Normal | Usage.ColorUnpacked, new Material(ColorAttribute.createDiffuse(Color.WHITE)));
 				meshBuilder.rect(nlcv, flcv, frcv, nrcv);
-				// Outline render (lines).
-				//meshBuilder = modelBuilder.part(meshName + "_outline", GL20.GL_LINES, Usage.Position | Usage.Normal, new Material(ColorAttribute.createDiffuse(new Color(MESH_OUTLINE_COLOR))));
-				//meshBuilder.rect(nlcv, flcv, frcv, nrcv);
-					
+				
+			   /*
+				* Render mesh outline (can be taxing for renderer!)...
+				*/
+				/*
+				final float outlineYDiff = 0.15f;
+				nlcv.position.add(0, outlineYDiff, 0);
+				flcv.position.add(0, outlineYDiff, 0);
+				frcv.position.add(0, outlineYDiff, 0);
+				nrcv.position.add(0, outlineYDiff, 0);
+				meshBuilder = modelBuilder.part(meshName + "_outline", GL20.GL_LINES, Usage.Position | Usage.Normal, new Material(ColorAttribute.createDiffuse(new Color(MESH_OUTLINE_COLOR))));
+				meshBuilder.rect(nlcv, flcv, frcv, nrcv);
+				*/
 			}
 		}
 		model = modelBuilder.end();
-		instance = new ModelInstance(model);
+		renderable = new ModelInstance(model);
 	}
 	
 	/**
@@ -128,7 +140,7 @@ public final class TerrainChunk implements Renderable, Disposable {
 	
 	@Override
 	public ModelInstance getRenderableProvider() {
-		return instance;
+		return renderable;
 	}
 	
 	@Override

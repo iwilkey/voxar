@@ -1,17 +1,23 @@
-package dev.iwilkey.voxar.world.terrain;
+package dev.iwilkey.voxar.space.terrain;
 
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 
+import dev.iwilkey.voxar.entity.VoxelRigidbody;
 import dev.iwilkey.voxar.gfx.Renderable;
-import dev.iwilkey.voxar.noise.Perlin;
+import dev.iwilkey.voxar.noise.Perlin2D;
+import dev.iwilkey.voxar.physics.PhysicsBodyType;
+import dev.iwilkey.voxar.physics.PhysicsPrimitive;
+import dev.iwilkey.voxar.space.VoxelSpace;
 
 /**
  * A technically infinite expanse of procedurally generated TerrainChunks.
  * @author iwilkey
  */
 public final class Terrain implements Renderable, Disposable {
+	
+	private final VoxelSpace operatingSpace;
 	
 	/**
 	 * Terrain detail option. The world distance of each line connecting any two vertices. 
@@ -43,18 +49,21 @@ public final class Terrain implements Renderable, Disposable {
 	/**
 	 * Mathematical utility tool used for procedural terrain generation.
 	 */
-	private final Perlin noise;
+	private final Perlin2D noise;
 	
 	/**
 	 * Create a new Terrain.
 	 * @param seed a value that all procedural generation will be based on.
-	 * @param chunkScale 
+	 * @param chunkScale the world distance of each line connecting any two vertices. 
 	 */
-	public Terrain(double seed, long globalChunkScale, long globalHeightMapAmplifier, int globalChunkApothem) {
+	public Terrain(VoxelSpace operatingSpace, double seed, long globalChunkScale, long globalHeightMapAmplifier, int globalChunkApothem) {
+		
+		this.operatingSpace = operatingSpace;
 		this.globalChunkScale = globalChunkScale;
 		this.globalHeightMapAmplifier = globalHeightMapAmplifier;
 		this.globalChunkApothem = globalChunkApothem;
-		noise = new Perlin(seed, globalChunkScale + 1.0f);
+		noise = new Perlin2D(seed, globalChunkScale * 50);
+		
 		activeChunks = new Array<>();
 		renderables = new Array<>();
 		
@@ -72,6 +81,11 @@ public final class Terrain implements Renderable, Disposable {
 		TerrainChunk chunk = new TerrainChunk(this, chunkX, chunkZ); // hardcoded chunk apothem for now.
 		activeChunks.add(chunk);
 		renderables.add(chunk.getRenderableProvider());
+		VoxelRigidbody chunkPhysics = new VoxelRigidbody(chunk.getChunkModel(), "chunk", 0.0f, PhysicsPrimitive.MESH, PhysicsBodyType.STATIC);
+		chunkPhysics.setUID(0);
+		chunkPhysics.getBody().proceedToTransform(chunkPhysics.transform);
+		chunkPhysics.getBody().setUserValue(0);
+		operatingSpace.getOperatingState().getVoxelSpace().getPhysicsEngine().getDynamicsWorld().addRigidBody(chunkPhysics.getBody());
 	}
 	
 	/**
@@ -98,7 +112,7 @@ public final class Terrain implements Renderable, Disposable {
 	/**
 	 * @return the mathematical utility tool used for procedural terrain generation.
 	 */
-	public Perlin getGenerationNoise() {
+	public Perlin2D getGenerationNoise() {
 		return noise;
 	}
 	

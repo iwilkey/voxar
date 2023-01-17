@@ -5,7 +5,6 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Disposable;
 
 import dev.iwilkey.voxar.clock.Tickable;
-import dev.iwilkey.voxar.entity.VoxelEntity;
 
 /**
  * An abstraction of PerspectiveCamera, adding high-level control of the rendering perspective of a VoxelSpace through Controllers.
@@ -22,8 +21,8 @@ public final class VoxelSpacePerspective extends PerspectiveCamera implements Ti
 		super(fov, viewportWidth, viewportHeight);
 		position.set(0, 2, 0);
 		direction.set(Vector3.X);
-		near = 1f;
-		setRenderDistance(1000);
+		near = 0.1f;
+		setRenderDistance(200);
 		update();
 	}
 
@@ -32,18 +31,6 @@ public final class VoxelSpacePerspective extends PerspectiveCamera implements Ti
 		if(controller == null) return;
 		controller.control(this);
 		update();
-	}
-	
-	/**
-	 * Performs a frustum test.
-	 * @param instance the entity being tested.
-	 * @return whether or not it is visible based on the current position of the camera.
-	 */
-	public boolean frustumTest(VoxelEntity instance) {
-		Vector3 position = Vector3.Zero;
-		instance.transform.getTranslation(position);
-		position.add(instance.getCenterOfBounding());
-		return this.frustum.sphereInFrustum(position, instance.getRadius());
 	}
 	
 	/**

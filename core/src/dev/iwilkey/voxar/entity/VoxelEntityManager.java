@@ -175,7 +175,7 @@ public final class VoxelEntityManager implements Disposable, Tickable {
 	/**
 	 * @return renderables of entities active within a VoxelSpace.
 	 */
-	public Array<VoxelEntity> getRenderables() {
+	public Array<VoxelEntity> getRenderableEntityProviders() {
 		return renderables;
 	}
 

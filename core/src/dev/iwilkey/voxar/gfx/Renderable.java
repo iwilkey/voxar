@@ -4,6 +4,7 @@ import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.RenderableProvider;
 import com.badlogic.gdx.utils.Array;
 
+import dev.iwilkey.voxar.entity.VoxelEntity;
 import dev.iwilkey.voxar.perspective.VoxelSpacePerspective;
 
 /**
@@ -40,4 +41,12 @@ public interface Renderable {
 	default public Array<ModelInstance> getRenderableProviders() {
 		return null;
 	}
+	
+	/**
+	 * @return the RenderableProviders of this entity Renderable object.
+	 */
+	default public Array<VoxelEntity> getRenderableEntityProviders() {
+		return null;
+	}
+	
 }

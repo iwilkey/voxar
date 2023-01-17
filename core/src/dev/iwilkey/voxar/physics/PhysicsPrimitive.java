@@ -29,5 +29,11 @@ public enum PhysicsPrimitive {
 	/**
 	 * A simple cylinder.
 	 */
-	CYLINDER
+	CYLINDER,
+	
+	/**
+	 * Takes on the shape of the mesh from entered Model. While this leads to an accurate physical representation of the object, it should seldom be used because it
+	 * is taxing on the engine.
+	 */
+	MESH
 }

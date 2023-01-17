@@ -3,21 +3,13 @@ package dev.iwilkey.voxar.gfx;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Graphics;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Window;
-import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.decals.CameraGroupStrategy;
 import com.badlogic.gdx.graphics.g3d.decals.DecalBatch;
 import com.badlogic.gdx.graphics.glutils.HdpiUtils;
-import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 
-import dev.iwilkey.voxar.gfx.shadows.system.ShadowSystem;
-import dev.iwilkey.voxar.gfx.shadows.system.classical.ClassicalShadowSystem;
-import dev.iwilkey.voxar.gfx.shadows.utils.AABBNearFarAnalyzer;
-import dev.iwilkey.voxar.gfx.shadows.utils.BoundingSphereDirectionalAnalyzer;
-import dev.iwilkey.voxar.gfx.shadows.utils.FixedShadowMapAllocator;
-import dev.iwilkey.voxar.gfx.shadows.utils.FrustumLightFilter;
 import dev.iwilkey.voxar.gui.Anchor;
 import dev.iwilkey.voxar.gui.GuiModule;
 import dev.iwilkey.voxar.gui.GuiModuleContents;
@@ -33,10 +25,6 @@ import imgui.flag.ImGuiWindowFlags;
  * @author iwilkey
  */
 public final class VoxarRenderer implements Disposable, RenderResizable {
-	
-	/*
-	 * Back buffer configuration.
-	 */
 	
 	/**
 	 * Bit depth for the red color channel.
@@ -69,15 +57,14 @@ public final class VoxarRenderer implements Disposable, RenderResizable {
 	public static final int STENCIL_BITS = 0x00;
 	
 	/**
-	 * MSAA samples. 
+	 * MSAA samples for anti-aliasing. 
 	 */
 	public static final int MSAA_SAMPLES = 0x03;
 	
-	public static final int GLOBAL_GL_LINE_WIDTH = 3;
-	
-	/*
-	 * Runtime variables.
+	/**
+	 * OpenGL rendering line width.
 	 */
+	public static final int GLOBAL_GL_LINE_WIDTH = 3;
 	
 	/**
 	 * Current window width of the Voxar rendering canvas, in pixels.
@@ -114,11 +101,8 @@ public final class VoxarRenderer implements Disposable, RenderResizable {
 	private final ModelBatch gfx3D;
 	
 	/**
-	 * EXPERIMENTAL!
+	 * Used for when all Renderables have been culled away.
 	 */
-	private final ShadowSystem shadowSystem;
-	private Array<ModelBatch> shadowPassBatches;
-	
 	private NullRenderableProvider nullRenderable;
 	
 	private final GuiModule idleGui = new GuiModule("Voxar Engine", new GuiModuleContents() {
@@ -152,19 +136,8 @@ public final class VoxarRenderer implements Disposable, RenderResizable {
 		WH = Gdx.graphics.getHeight();
 		// Set up raster (2D) renderer.
 		raster = new RasterRenderer();
-		
-		// Set up shadow system (EXPERIMENTAL).
-		shadowSystem = new ClassicalShadowSystem(new AABBNearFarAnalyzer(), 
-				new FixedShadowMapAllocator(2048, 4), 
-				new BoundingSphereDirectionalAnalyzer(), 
-				new FrustumLightFilter());
-		shadowSystem.init();
-		shadowPassBatches = new Array<>();
-		for(int i = 0; i < shadowSystem.getPassQuantity(); i++) 
-			shadowPassBatches.add(new ModelBatch(shadowSystem.getPassShaderProvider(i)));
-		
 		// Set up main 3D renderer.
-		gfx3D = new ModelBatch(shadowSystem.getShaderProvider());
+		gfx3D = new ModelBatch();
 		// Set up null renderable...
 		nullRenderable = new NullRenderableProvider();
 		// Set up ImGui renderer.
@@ -175,6 +148,7 @@ public final class VoxarRenderer implements Disposable, RenderResizable {
 	 * Clear color buffer, depth buffer, and GUI buffers. Called directly before new data is to be drawn to the screen.
 	 */
 	void preprocess() {
+		HdpiUtils.glViewport(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 		Gdx.gl.glClearColor(0.1f, 0.1f, 0.1f, 1f);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 		Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
@@ -189,45 +163,29 @@ public final class VoxarRenderer implements Disposable, RenderResizable {
 		if(state.hasVoxelSpace()) {
 			VoxelSpace space = state.getVoxelSpace();
 			VoxelSpacePerspective perspective = space.getRenderingPerspective();
-			// Render shadow system (EXPERIMENTAL).
-			shadowSystem.begin(perspective, space.getRawRenderables());
-			shadowSystem.update();
-			for(int i = 0; i < shadowSystem.getPassQuantity(); i++) {
-				shadowSystem.begin(i);
-			    Camera camera;
-			    while((camera = shadowSystem.next()) != null) {
-			    	shadowPassBatches.get(i).begin(camera);
-			    	shadowPassBatches.get(i).render(space.getRawRenderables(), space.getLighting());
-			    	shadowPassBatches.get(i).end();
-			    }
-			    camera = null;
-			    shadowSystem.end(i);
-			}
-			shadowSystem.end();
-			HdpiUtils.glViewport(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-			Gdx.gl.glClearColor(0.1f, 0.1f, 0.1f, 1f);
-			Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 			if(raster.get25D() == null)
 				raster.set25D(new DecalBatch(new CameraGroupStrategy(perspective)));
 			if(space.getCulledRenderablesSize() != 0) {
+				preprocess();
 				gfx3D.begin(perspective);
 				gfx3D.render(space.getRenderables(), space.getLighting());
 				gfx3D.end();
-				raster.render3D(perspective);
-				raster.render2D();
 				if(space.getPhysicsEngine().isDebugMode()) {
 					space.getPhysicsEngine().getDebugRenderer().begin(space.getRenderingPerspective());
 					space.getPhysicsEngine().getDynamicsWorld().debugDrawWorld();
 					space.getPhysicsEngine().getDebugRenderer().end();
 				}
+				raster.render3D(perspective);
+				raster.render2D();
+			
 			} else {
+				preprocess();
 				gfx3D.begin(perspective);
 				gfx3D.render(nullRenderable.getProvider(), space.getLighting());
 				gfx3D.end();
 				raster.render3D(perspective);
 				raster.render2D();
 			}
-			gui.clearBuffer();
 		}
 	}
 	

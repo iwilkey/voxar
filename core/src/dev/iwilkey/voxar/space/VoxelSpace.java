@@ -4,19 +4,21 @@ import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.ModelCache;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
+import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 
 import dev.iwilkey.voxar.clock.Tickable;
 import dev.iwilkey.voxar.entity.VoxelEntity;
 import dev.iwilkey.voxar.entity.VoxelEntityManager;
+import dev.iwilkey.voxar.gfx.FrustumCulling;
 import dev.iwilkey.voxar.gfx.RenderResizable;
 import dev.iwilkey.voxar.gfx.VoxarRenderer;
 import dev.iwilkey.voxar.perspective.Controller;
 import dev.iwilkey.voxar.perspective.VoxelSpacePerspective;
 import dev.iwilkey.voxar.physics.PhysicsEngine;
+import dev.iwilkey.voxar.space.terrain.Terrain;
 import dev.iwilkey.voxar.state.VoxarEngineState;
-import dev.iwilkey.voxar.world.terrain.Terrain;
 
 /**
  * A three-dimensional environment with real-time lighting, real-time point shadows (coming soon), entity management, and dynamic physics.
@@ -40,14 +42,14 @@ public final class VoxelSpace implements Disposable, Tickable, RenderResizable {
 	private final PhysicsEngine physicsEngine;
 	
 	/**
-	 * The amount of Renderables that should be drawn this frame.
-	 */
-	private long culledRenderablesSize;
-	
-	/**
 	 * RenderableProvider of all active VoxelEntities, baked and optimized.
 	 */
 	private final ModelCache renderables;
+	
+	/**
+	 * List of RenderableProviders that are currently visable to the VoxelSpacePerspecive.
+	 */
+	private Array<ModelInstance> culledRenderables;
 	
 	/**
 	 * OpenGL lighting.
@@ -57,7 +59,7 @@ public final class VoxelSpace implements Disposable, Tickable, RenderResizable {
 	/**
 	 * Terrain.
 	 */
-	private final Terrain terrain;
+	private Terrain terrain;
 	
 	/**
 	 * "Camera" that captures the VoxelSpace's Renderables from any perspective.
@@ -66,37 +68,59 @@ public final class VoxelSpace implements Disposable, Tickable, RenderResizable {
 
 	public VoxelSpace(VoxarEngineState operatingState) {
 		this.operatingState = operatingState;
-		// Initialize the RenderableProvider, lighting, and shadows (planned for future).
+		// Initialize the RenderableProvider.
 		renderables = new ModelCache();
+		culledRenderables = new Array<>();
+		
+		// Lighting and shadows.
 		lighting = new Environment();
-		lighting.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.4f, 1f));
-		// Initialize and configure the "camera".
+		lighting.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.6f, 0.6f, 0.6f, 1f));
+		lighting.set(new ColorAttribute(ColorAttribute.Fog, 0.1f, 0.1f, 0.1f, 1f));
+		lighting.add(new DirectionalLight().set(1f, 1f, 1f, -1, -1, -1));
+		
+		// Initialize and configure the camera.
 		camera = new VoxelSpacePerspective(67, VoxarRenderer.WW, VoxarRenderer.WH);
+		
 		// Initialize entity manager.
 		entityManager = new VoxelEntityManager(this);
-		culledRenderablesSize = 0L;
+		
 		// Initialize physics engine.
 		physicsEngine = new PhysicsEngine();
+		
 		// Initialize terrain.
-		terrain = new Terrain(12342, 50, 50, 10);
+		terrain = null;
 	}
 	
 	/**
 	 * Bake and optimize RenderableProviders active in the VoxelSpace.
 	 * @param entities active RenderableProviders.
 	 */
-	protected void optimizeAndProvideRenderables(Array<VoxelEntity> entities) {
-		// Perform 3D frustum culling.
-		Array<ModelInstance> culledRenderables = new Array<>();
-		for(final VoxelEntity e : entities) 
-			if(camera.frustumTest(e))
-				culledRenderables.add(e);
-		culledRenderablesSize = 1;
-		// Bake RenderableProviders (if any) into one draw call where possible.
-		renderables.begin(camera);
-		// renderables.add(culledRenderables);
-		renderables.add(terrain.getRenderableProviders());
-		renderables.end();
+	protected void optimizeAndProvideRenderables() {
+		
+		culledRenderables.clear();
+		
+		// Cull entities.
+		if(entityManager.getRenderableEntityProviders().size != 0) {
+			for(final VoxelEntity e : entityManager.getRenderableEntityProviders()) 
+				if(FrustumCulling.sphericalTestWith(e, camera))
+					culledRenderables.add(e);
+		}
+		
+		// Cull terrain chunks (if terrain exists).
+		if(terrain != null) {
+			for(final ModelInstance t : terrain.getRenderableProviders()) {
+				if(FrustumCulling.cuboidTestWith(t, camera))
+					culledRenderables.add(t);
+			}
+		}
+		
+		// Add culled RenderableProviders to Space renderables.
+		if(culledRenderables.size != 0) {
+			renderables.begin(camera);
+			renderables.add(culledRenderables);
+			renderables.end();
+		}
+		
 	}
 	
 	@Override
@@ -104,7 +128,7 @@ public final class VoxelSpace implements Disposable, Tickable, RenderResizable {
 		camera.tick();
 		physicsEngine.tick();
 		entityManager.tick();
-		optimizeAndProvideRenderables(entityManager.getRenderables());
+		optimizeAndProvideRenderables();
 	}
 	
 	@Override
@@ -120,6 +144,14 @@ public final class VoxelSpace implements Disposable, Tickable, RenderResizable {
 	 */
 	public void setPerspectiveController(Controller controller) {
 		camera.setController(controller);
+	}
+	
+	/**
+	 * Set a terrain object to the VoxelSpace.
+	 * @param terrain the terrain object.
+	 */
+	public void setTerrain(Terrain terrain) {
+		this.terrain = terrain;
 	}
 	
 	/**
@@ -144,17 +176,24 @@ public final class VoxelSpace implements Disposable, Tickable, RenderResizable {
 	}
 	
 	/**
-	 * @return iterative Renderables.
+	 * @return iterative entity Renderables.
 	 */
 	public Array<VoxelEntity> getRawRenderables() {
-		return entityManager.getRenderables();
+		return entityManager.getRenderableEntityProviders();
+	}
+	
+	/**
+	 * @return return RenderableProviders visible through the VoxelSpacePerspective.
+	 */
+	public Array<ModelInstance> getCulledRenderables() {
+		return culledRenderables;
 	}
 	
 	/**
 	 * @return the amount of RenderableProviders that should be rendered this frame.
 	 */
 	public long getCulledRenderablesSize() {
-		return culledRenderablesSize;
+		return culledRenderables.size;
 	}
 	
 	/**
@@ -181,6 +220,8 @@ public final class VoxelSpace implements Disposable, Tickable, RenderResizable {
 	@Override
 	public void dispose() {
 		physicsEngine.dispose();
+		if(terrain != null)
+			terrain.dispose();
 		renderables.dispose();
 		entityManager.dispose();
 		camera.dispose();
