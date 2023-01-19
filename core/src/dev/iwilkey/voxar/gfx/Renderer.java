@@ -8,6 +8,7 @@ import org.lwjgl.opengl.GL20;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Graphics;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Window;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelCache;
@@ -58,7 +59,7 @@ public final class Renderer implements ViewportResizable, Disposable {
 	/**
 	 * Bit depth for depth buffer.
 	 */
-	public static final int DEPTH_BITS = (1 << 4);
+	public static final int DEPTH_BITS = (1 << 5);
 	
 	/**
 	 * Bit depth for stencil buffer. 
@@ -117,7 +118,7 @@ public final class Renderer implements ViewportResizable, Disposable {
 	/**
 	 * Buffer for requested RenderableProviders renders from registered RenderableProvider3Ds.
 	 */
-	private static Array<RenderableProvider3D> gfxBuffer3D;
+	private static Array<VoxarRenderableProvider3D> gfxBuffer3D;
 	
 	/**
 	 * The Voxar engine's capability to draw raster graphics in viewport space.
@@ -127,8 +128,7 @@ public final class Renderer implements ViewportResizable, Disposable {
 	/**
 	 * Buffer for requested Raster2 renders from registered RenderableProvider2Ds.
 	 */
-	@SuppressWarnings("unused")
-	private static Array<Raster2> gfxBuffer2D;
+	private static Array<VoxarRenderableProvider2D> gfxBuffer2D;
 	
 	/**
 	 * The Voxar engine's capability to draw raster graphics in 3D space.
@@ -246,6 +246,7 @@ public final class Renderer implements ViewportResizable, Disposable {
 	 * Voxar engine's rendering process.
 	 * @param state the active state (or null if none).
 	 */
+	ModelCache cache = new ModelCache();
 	public void render(VoxarEngineState state) {
 		clearBuffers();
 		if(state == null) {
@@ -255,24 +256,37 @@ public final class Renderer implements ViewportResizable, Disposable {
 				final int loadPercentage = (int)state.getAssetManager().getProgress();
 				LOADING_GUI_MODULE.show(Anchor.BOTTOM_RIGHT, 10.0f, state.getStateName(), Integer.toString((int)loadPercentage));
 			} else {
-				// Go through registered state providers.
-				for(RenderableProvider3D provider : gfxBuffer3D) {
+				
+				// Go through registered state providers in 3D.
+				for(VoxarRenderableProvider3D provider : gfxBuffer3D) {
 					// Cull registered instances.
-					final ModelCache cache = new ModelCache();
 					cache.begin(provider.getRenderingPerspective());
-					for(ModelInstance p : provider.getRegisteredModelInstances()) {
-						if(p instanceof VoxelEntity) {
-							if(FrustumCulling.sphericalTestWith(p, provider.getRenderingPerspective()))
-								cache.add(p);
-						} else {
-							if(FrustumCulling.cuboidTestWith(p, provider.getRenderingPerspective()))
-								cache.add(p);
-						}
-					}
+					for(final VoxelEntity e : provider.getRegisteredVoxelEntities()) 
+						if(FrustumCulling.sphericalTestWith(e, provider.getRenderingPerspective()))
+							cache.add(e);
+					for(final ModelInstance p : provider.getRegisteredModelInstances()) 
+						if(FrustumCulling.cuboidTestWith(p, provider.getRenderingPerspective()))
+							cache.add(p);
 					cache.end();
-					ModelBatch shader = gfx3D.get(provider.getDesiredShaderID());
+					ModelBatch shader = gfx3D.get(provider.getDesiredShader());
 					shader.begin(provider.getRenderingPerspective());
 					shader.render(cache, provider.getRenderingEnvironment());
+					shader.end();
+				}
+				
+				// Go through registered state providers in 2D.
+				for(VoxarRenderableProvider2D provider : gfxBuffer2D) {
+					SpriteBatch shader = gfx2D.get(provider.getDesiredShader());
+					shader.begin();
+					for(final Raster2 r : provider.getRegisteredRaster2s()) {
+						shader.setColor(r.getTint());
+						final int x = (int)r.getBoundingBox().x;
+						final int y = (int)r.getBoundingBox().y;
+						final int w = (int)r.getBoundingBox().width;
+						final int h = (int)r.getBoundingBox().height;
+						shader.draw(r.getBindedRaster(), x, y, w, h);
+					}
+					shader.setColor(Color.WHITE);
 					shader.end();
 				}
 			}
@@ -281,23 +295,6 @@ public final class Renderer implements ViewportResizable, Disposable {
 	}
 	
 	/*
-	private void render2D() {
-		if(gfxBuffer2D.size == 0) 
-			return;
-		gfx2D.get(STANDARD_2D_SHADER).begin();
-		for(Raster2 s : gfxBuffer2D) {
-			gfx2D.get(STANDARD_2D_SHADER).setColor(s.getTint());
-			final int x = (int)s.getBoundingBox().x;
-			final int y = (int)s.getBoundingBox().y;
-			final int w = (int)s.getBoundingBox().width;
-			final int h = (int)s.getBoundingBox().height;
-			gfx2D.get(STANDARD_2D_SHADER).draw(s.getBindedRaster(), x, y, w, h);
-		}
-		gfx2D.get(STANDARD_2D_SHADER).setColor(Color.WHITE);
-		gfx2D.get(STANDARD_2D_SHADER).end();
-		gfxBuffer2D.clear();
-	}
-	
 	private void render25D(Perspective3D perspective) {
 		if(gfxBuffer25D.size == 0)
 			return;
@@ -315,15 +312,20 @@ public final class Renderer implements ViewportResizable, Disposable {
 	 * Register a RenderableProvider3D for rendering.
 	 * @param provider the provider.
 	 */
-	public static void register(RenderableProvider3D provider) {
-		gfxBuffer3D.add(provider);
+	public static void register(VoxarRenderableProvider provider) {
+		if(provider instanceof VoxarRenderableProvider3D)
+			gfxBuffer3D.add((VoxarRenderableProvider3D)provider);
+		if(provider instanceof VoxarRenderableProvider2D)
+			gfxBuffer2D.add((VoxarRenderableProvider2D)provider);
 	}
 
 	@Override
 	public void windowResizeCallback(int nw, int nh) {
 		for(Map.Entry<Long, SpriteBatch> entry : gfx2D.entrySet()) 
 			entry.getValue().getProjectionMatrix().setToOrtho2D(0, 0, nw, nh);
-		for(RenderableProvider3D p : gfxBuffer3D)
+		for(VoxarRenderableProvider3D p : gfxBuffer3D)
+			p.windowResizeCallback(nw, nh);
+		for(VoxarRenderableProvider2D p : gfxBuffer2D)
 			p.windowResizeCallback(nw, nh);
 		WINDOW_WIDTH = graphics.getWidth();
 		WINDOW_HEIGHT = graphics.getHeight();

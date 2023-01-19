@@ -23,7 +23,7 @@ public final class Perlin2D {
 
 	/**
 	 * Generate noise using default scale.
-	 * @param seed the seed.
+	 * @param time the time the snapshot of noise is taken at.
 	 */
 	public Perlin2D(double time, double frequency) {
 		this.time = time;

@@ -94,13 +94,7 @@ public final class VoxarDebugWorld extends VoxarEngineState {
 	
 	void setUpSpace() {
 		setVoxelSpace(new VoxelSpace(this));
-		
-		// Create a terrain inside voxel space.
-		double terrainSeed = new Random().nextDouble(1, 10000);
-		long globalChunkScale = new Random().nextLong(5, 15);
-		long globalHeightAmp = new Random().nextLong(50, 300);
-		int globalChunkApothem = new Random().nextInt(5, 10);
-		getVoxelSpace().createTerrain(terrainSeed, globalChunkScale, globalHeightAmp, globalChunkApothem);
+		getVoxelSpace().createTerrain(1000, 10, 50, 10);
 		
 		// Set up space perspective.
 		controller = new FreeController();

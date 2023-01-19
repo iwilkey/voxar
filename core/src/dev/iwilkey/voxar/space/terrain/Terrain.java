@@ -3,7 +3,7 @@ package dev.iwilkey.voxar.space.terrain;
 import com.badlogic.gdx.utils.Array;
 
 import dev.iwilkey.voxar.entity.VoxelRigidbody;
-import dev.iwilkey.voxar.gfx.RenderableProvider3D;
+import dev.iwilkey.voxar.gfx.VoxarRenderableProvider3D;
 import dev.iwilkey.voxar.noise.Perlin2D;
 import dev.iwilkey.voxar.physics.PhysicsBodyType;
 import dev.iwilkey.voxar.physics.PhysicsPrimitive;
@@ -14,7 +14,7 @@ import dev.iwilkey.voxar.space.VoxelSpace;
  * A technically infinite expanse of procedurally generated TerrainChunks.
  * @author iwilkey
  */
-public final class Terrain extends RenderableProvider3D {
+public final class Terrain extends VoxarRenderableProvider3D {
 	
 	private final VoxelSpace operatingSpace;
 	

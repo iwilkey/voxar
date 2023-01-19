@@ -6,7 +6,7 @@ import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 
 import dev.iwilkey.voxar.clock.Tickable;
 import dev.iwilkey.voxar.entity.VoxelEntityManager;
-import dev.iwilkey.voxar.gfx.RenderableProvider3D;
+import dev.iwilkey.voxar.gfx.VoxarRenderableProvider3D;
 import dev.iwilkey.voxar.gfx.Renderer;
 import dev.iwilkey.voxar.perspective.Controller;
 import dev.iwilkey.voxar.perspective.Perspective3D;
@@ -18,7 +18,7 @@ import dev.iwilkey.voxar.state.VoxarEngineState;
  * A three-dimensional environment with real-time lighting, real-time point shadows (coming soon), entity management, and dynamic physics.
  * @author iwilkey
  */
-public final class VoxelSpace extends RenderableProvider3D implements Tickable {
+public final class VoxelSpace extends VoxarRenderableProvider3D implements Tickable {
 	
 	/**
 	 * The state that the VoxelSpace belongs to.

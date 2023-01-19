@@ -29,7 +29,7 @@ public final class NullRenderableProvider {
 		ModelBuilder modelBuilder = new ModelBuilder();
 		modelBuilder.begin();
 		MeshPartBuilder meshBuilder;
-		meshBuilder = modelBuilder.part("part2", GL20.GL_TRIANGLES, Usage.Position | Usage.Normal, new Material());
+		meshBuilder = modelBuilder.part("null", GL20.GL_TRIANGLES, Usage.Position | Usage.Normal, new Material());
 		meshBuilder.sphere(0, 0, 0, 10, 10);
 		model = modelBuilder.end();
 		this.renderable = new ModelInstance(model);

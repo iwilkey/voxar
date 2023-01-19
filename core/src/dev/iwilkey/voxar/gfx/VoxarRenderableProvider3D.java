@@ -3,26 +3,27 @@ package dev.iwilkey.voxar.gfx;
 import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.Disposable;
 
+import dev.iwilkey.voxar.entity.VoxelEntity;
 import dev.iwilkey.voxar.perspective.Perspective3D;
 
 /**
- * Interface for objects that can provide RenderableProviders for objects that can render them in 3D space.
+ * An object that, when inherited, allows 3D RenderableProviders to be rendered by the Renderer.
  * @author iwilkey
  */
-public abstract class RenderableProvider3D implements ViewportResizable, Disposable {
+public abstract class VoxarRenderableProvider3D extends VoxarRenderableProvider {
 	
-	private final long shaderID;
 	private final Perspective3D renderingPerspective;
 	private final Environment renderingEnvironment;
 	private Array<ModelInstance> renderableModelInstances;
+	private Array<VoxelEntity> renderableVoxelEntityInstances;
 
-	public RenderableProvider3D(Perspective3D renderingPerspective, Environment renderingEnvironment) {
+	public VoxarRenderableProvider3D(Perspective3D renderingPerspective, Environment renderingEnvironment) {
+		super(Renderer.STANDARD_3D_SHADER);
 		this.renderingPerspective = renderingPerspective;
 		this.renderingEnvironment = renderingEnvironment;
-		shaderID = Renderer.STANDARD_3D_SHADER;
 		renderableModelInstances = new Array<>();
+		renderableVoxelEntityInstances = new Array<>();
 		Renderer.register(this);
 	}
 	
@@ -35,11 +36,20 @@ public abstract class RenderableProvider3D implements ViewportResizable, Disposa
 	}
 	
 	/**
+	 * Register a VoxelEntity to be rendered each render call.
+	 * @param entity the entity.
+	 */
+	public void registerInstance(VoxelEntity entity) {
+		renderableVoxelEntityInstances.add(entity);
+	}
+	
+	/**
 	 * Remove an instance that is being rendered each call.
 	 * @param instance the instance.
 	 */
 	public void abortInstance(ModelInstance instance) {
 		renderableModelInstances.removeValue(instance, false);
+		renderableVoxelEntityInstances.removeValue((VoxelEntity)instance, false);
 	}
 	
 	/**
@@ -47,6 +57,13 @@ public abstract class RenderableProvider3D implements ViewportResizable, Disposa
 	 */
 	public Array<ModelInstance> getRegisteredModelInstances() {
 		return renderableModelInstances;
+	}
+	
+	/**
+	 * @return list of VoxelEntities to be culled and rendered.
+	 */
+	public Array<VoxelEntity> getRegisteredVoxelEntities() {
+		return renderableVoxelEntityInstances;
 	}
     
     /**
@@ -61,13 +78,6 @@ public abstract class RenderableProvider3D implements ViewportResizable, Disposa
      */
     public Environment getRenderingEnvironment() {
     	return renderingEnvironment;
-    }
-    
-    /**
-     * @return the shader ID the Renderer should render this provider with.
-     */
-    public long getDesiredShaderID() {
-    	return shaderID;
     }
     
     @Override

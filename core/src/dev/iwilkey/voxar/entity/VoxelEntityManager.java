@@ -11,7 +11,7 @@ import com.badlogic.gdx.utils.Disposable;
 
 import dev.iwilkey.voxar.asset.exception.VoxarAssetNotReferenced;
 import dev.iwilkey.voxar.clock.Tickable;
-import dev.iwilkey.voxar.gfx.RenderableProvider3D;
+import dev.iwilkey.voxar.gfx.VoxarRenderableProvider3D;
 import dev.iwilkey.voxar.model.VoxelModel;
 import dev.iwilkey.voxar.physics.PhysicsBodyType;
 import dev.iwilkey.voxar.physics.PhysicsPrimitive;
@@ -24,7 +24,7 @@ import dev.iwilkey.voxar.space.VoxelSpace;
  * active within a VoxelSpace.
  * @author iwilkey
  */
-public final class VoxelEntityManager extends RenderableProvider3D implements Disposable, Tickable {
+public final class VoxelEntityManager extends VoxarRenderableProvider3D implements Disposable, Tickable {
 	
 	private static final Random random = new Random();
 	
