@@ -20,7 +20,7 @@ Voxar's features will be outlined below. Please keep in mind this README is unde
 
 #### > Voxar is modular and self-contained.
 
-Voxar is a game engine, a general software engine, a mathematical tool, and can take any other form you can think of.
+Voxar can take the form of a game engine, a general software engine, a mathematical tool, or anything else you can think of.
 
     *... [UNDER CONSTRUCTION] ...*
 
