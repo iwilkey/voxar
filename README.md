@@ -31,8 +31,8 @@ Voxar can take the form of a game engine, a general software engine, a mathemati
 ## Getting Started
 
 Voxar is based off of libGDX, a free and open-source game-development application framework. This means all the C and C++ dependencies are handled, and 
-all GDX tools are readily available for use as well. The only concept you should familiarize yourself with is Gradle, the build system that handles Voxar
-compilation, testing, distribution, and porting. 
+all GDX tools are readily available for use. The only tool you should familiarize yourself with is Gradle, the build system that handles Voxar's
+compilation, testing, and distribution.
 
     *... [UNDER CONSTRUCTION] ...*
 
