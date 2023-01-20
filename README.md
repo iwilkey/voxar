@@ -8,25 +8,25 @@ Voxar's features will be outlined below. Please keep in mind this README is unde
 
 #### > Voxar is a smart, feature-packed API.
 
-__... [UNDER CONSTRUCTION] ...__
+    *... [UNDER CONSTRUCTION] ...*
 
 #### > Voxar is easy to learn right out of the box.
 
-__... [UNDER CONSTRUCTION] ...__
+    *... [UNDER CONSTRUCTION] ...*
 
 #### > Voxar applications can be distributed to a plethora of platforms using one codebase.
 
-__... [UNDER CONSTRUCTION] ...__
+    *... [UNDER CONSTRUCTION] ...*
 
 #### > Voxar is modular and self-contained.
 
 Voxar is a game engine, a general software engine, a mathematical tool, and can take any other form you can think of.
 
-__... [UNDER CONSTRUCTION] ...__
+    *... [UNDER CONSTRUCTION] ...*
 
 #### > Voxar is fast, efficient, and extremely configurable.
 
-__... [UNDER CONSTRUCTION] ...__
+    *... [UNDER CONSTRUCTION] ...*
 
 ## Getting Started
 
@@ -34,7 +34,7 @@ Voxar is based off of libGDX, a free and open-source game-development applicatio
 all GDX tools are readily available for use as well. The only concept you should familiarize yourself with is Gradle, the build system that handles Voxar
 compilation, testing, distribution, and porting. 
 
-__... [UNDER CONSTRUCTION] ...__
+    *... [UNDER CONSTRUCTION] ...*
 
 ## Credit and Usage
 
