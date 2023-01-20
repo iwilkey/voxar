@@ -18,6 +18,11 @@ public final class Perspective3D extends PerspectiveCamera implements Tickable, 
 	Controller controller;
 	
 	/**
+	 * Crosshair gfx.
+	 */
+	Crosshair crosshair;
+	
+	/**
 	 * A new VoxelSpacePerspective object.
 	 * @param fov the "field-of-view" value.
 	 * @param viewportWidth the width of the rendering viewport.
@@ -25,6 +30,7 @@ public final class Perspective3D extends PerspectiveCamera implements Tickable, 
 	 */
 	public Perspective3D(int fov, int viewportWidth, int viewportHeight) {
 		super(fov, viewportWidth, viewportHeight);
+		crosshair = new Crosshair();
 		position.set(0, 2, 0);
 		direction.set(Vector3.X);
 		near = 0.1f;

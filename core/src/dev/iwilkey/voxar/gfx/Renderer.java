@@ -268,7 +268,7 @@ public final class Renderer implements ViewportResizable, Disposable {
 						if(FrustumCulling.cuboidTestWith(p, provider.getRenderingPerspective()))
 							cache.add(p);
 					cache.end();
-					ModelBatch shader = gfx3D.get(provider.getDesiredShader());
+					final ModelBatch shader = gfx3D.get(provider.getDesiredShader());
 					shader.begin(provider.getRenderingPerspective());
 					shader.render(cache, provider.getRenderingEnvironment());
 					shader.end();
@@ -276,7 +276,7 @@ public final class Renderer implements ViewportResizable, Disposable {
 				
 				// Go through registered state providers in 2D.
 				for(VoxarRenderableProvider2D provider : gfxBuffer2D) {
-					SpriteBatch shader = gfx2D.get(provider.getDesiredShader());
+					final SpriteBatch shader = gfx2D.get(provider.getDesiredShader());
 					shader.begin();
 					for(final Raster2 r : provider.getRegisteredRaster2s()) {
 						shader.setColor(r.getTint());
@@ -309,7 +309,7 @@ public final class Renderer implements ViewportResizable, Disposable {
 	*/
 	
 	/**
-	 * Register a RenderableProvider3D for rendering.
+	 * Register a RenderableProvider for rendering.
 	 * @param provider the provider.
 	 */
 	public static void register(VoxarRenderableProvider provider) {
@@ -321,14 +321,14 @@ public final class Renderer implements ViewportResizable, Disposable {
 
 	@Override
 	public void windowResizeCallback(int nw, int nh) {
-		for(Map.Entry<Long, SpriteBatch> entry : gfx2D.entrySet()) 
+		for(Map.Entry<Long, SpriteBatch> entry : gfx2D.entrySet())
 			entry.getValue().getProjectionMatrix().setToOrtho2D(0, 0, nw, nh);
 		for(VoxarRenderableProvider3D p : gfxBuffer3D)
 			p.windowResizeCallback(nw, nh);
 		for(VoxarRenderableProvider2D p : gfxBuffer2D)
 			p.windowResizeCallback(nw, nh);
-		WINDOW_WIDTH = graphics.getWidth();
-		WINDOW_HEIGHT = graphics.getHeight();
+		WINDOW_WIDTH = nw;
+		WINDOW_HEIGHT = nh;
 	}
 	
 	public long getWindowHandle() {
