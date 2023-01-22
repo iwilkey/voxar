@@ -1,8 +1,5 @@
 package dev.iwilkey.voxar.gfx;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.lwjgl.opengl.GL20;
 
 import com.badlogic.gdx.Gdx;
@@ -13,6 +10,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelCache;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
+import com.badlogic.gdx.graphics.g3d.decals.CameraGroupStrategy;
 import com.badlogic.gdx.graphics.g3d.decals.DecalBatch;
 import com.badlogic.gdx.graphics.glutils.HdpiUtils;
 import com.badlogic.gdx.utils.Array;
@@ -113,7 +111,12 @@ public final class Renderer implements ViewportResizable, Disposable {
 	/**
 	 * The Voxar engine's capability to draw RenderableProvider instances in 3D space.
 	 */
-	private final HashMap<Long, ModelBatch> gfx3D;
+	private final ModelBatch gfx3D;
+	
+	/**
+	 * Object that Voxar uses to try and render 3D renderables in one draw call.
+	 */
+	private final ModelCache cache;
 	
 	/**
 	 * Buffer for requested RenderableProviders renders from registered RenderableProvider3Ds.
@@ -123,7 +126,7 @@ public final class Renderer implements ViewportResizable, Disposable {
 	/**
 	 * The Voxar engine's capability to draw raster graphics in viewport space.
 	 */
-	private final HashMap<Long, SpriteBatch> gfx2D;
+	private final SpriteBatch gfx2D;
 	
 	/**
 	 * Buffer for requested Raster2 renders from registered RenderableProvider2Ds.
@@ -133,13 +136,12 @@ public final class Renderer implements ViewportResizable, Disposable {
 	/**
 	 * The Voxar engine's capability to draw raster graphics in 3D space.
 	 */
-	private final HashMap<Long, DecalBatch> gfx25D;
+	private DecalBatch gfx25D;
 	
 	/**
 	 * Buffer for requested Raster25 renders from registered RenderableProvider25Ds.
 	 */
-	@SuppressWarnings("unused")
-	private static Array<Raster25> gfxBuffer25D;
+	private static Array<VoxarRenderableProvider25D> gfxBuffer25D;
 	
 	/**
 	 * Used for when all Renderables have been culled away.
@@ -199,13 +201,10 @@ public final class Renderer implements ViewportResizable, Disposable {
 		WINDOW_WIDTH = graphics.getWidth();
 		WINDOW_HEIGHT = graphics.getHeight();
 		
-		// Initialize rendering batch HashMaps with default shaders.
-		gfx3D = new HashMap<>(); 
-		gfx3D.put(STANDARD_3D_SHADER, new ModelBatch());
-		gfx25D = new HashMap<>();
-		gfx25D.put(STANDARD_25D_SHADER, null); // This cannot be initialized until a CameraGroupStrategy can be made (when a scene has a VoxelSpace).
-		gfx2D = new HashMap<>();
-		gfx2D.put(STANDARD_2D_SHADER, new SpriteBatch());
+		gfx3D = new ModelBatch();
+		cache = new ModelCache();
+		gfx25D = null; // This has to be null until a state can supply a CameraGroupStrategy.
+		gfx2D = new SpriteBatch();
 		
 		// Init render call buffers.
 		gfxBuffer2D = new Array<>();
@@ -246,7 +245,6 @@ public final class Renderer implements ViewportResizable, Disposable {
 	 * Voxar engine's rendering process.
 	 * @param state the active state (or null if none).
 	 */
-	ModelCache cache = new ModelCache();
 	public void render(VoxarEngineState state) {
 		clearBuffers();
 		if(state == null) {
@@ -268,45 +266,42 @@ public final class Renderer implements ViewportResizable, Disposable {
 						if(FrustumCulling.cuboidTestWith(p, provider.getRenderingPerspective()))
 							cache.add(p);
 					cache.end();
-					final ModelBatch shader = gfx3D.get(provider.getDesiredShader());
-					shader.begin(provider.getRenderingPerspective());
-					shader.render(cache, provider.getRenderingEnvironment());
-					shader.end();
+					// TODO: Implement shader control system for renderer.
+					gfx3D.begin(provider.getRenderingPerspective());
+					gfx3D.render(cache, provider.getRenderingEnvironment());
+					gfx3D.end();
+				}
+				
+				// Go through registered state providers in 2.5D.
+				for(VoxarRenderableProvider25D provider : gfxBuffer25D) {
+					if(gfx25D == null) 
+						gfx25D = new DecalBatch(new CameraGroupStrategy(provider.getRenderingPerspective()));
+					for(Raster25 p : provider.getRegisteredRaster25s()) {
+						if(p.shouldBillboard())
+							p.getDecal().lookAt(provider.getRenderingPerspective().position, provider.getRenderingPerspective().up);
+						gfx25D.add(p.getDecal());
+					}
+					gfx25D.flush();
 				}
 				
 				// Go through registered state providers in 2D.
 				for(VoxarRenderableProvider2D provider : gfxBuffer2D) {
-					final SpriteBatch shader = gfx2D.get(provider.getDesiredShader());
-					shader.begin();
+					gfx2D.begin();
 					for(final Raster2 r : provider.getRegisteredRaster2s()) {
-						shader.setColor(r.getTint());
+						gfx2D.setColor(r.getTint());
 						final int x = (int)r.getBoundingBox().x;
 						final int y = (int)r.getBoundingBox().y;
 						final int w = (int)r.getBoundingBox().width;
 						final int h = (int)r.getBoundingBox().height;
-						shader.draw(r.getBindedRaster(), x, y, w, h);
+						gfx2D.draw(r.getBindedRaster(), x, y, w, h);
 					}
-					shader.setColor(Color.WHITE);
-					shader.end();
+					gfx2D.setColor(Color.WHITE);
+					gfx2D.end();
 				}
 			}
 		}
 		renderDIGL3();
 	}
-	
-	/*
-	private void render25D(Perspective3D perspective) {
-		if(gfxBuffer25D.size == 0)
-			return;
-		for(Raster25 r : gfxBuffer25D) {
-			if(r.shouldBillboard()) 
-				r.getDecal().lookAt(perspective.position, perspective.up);
-			gfx25D.get(STANDARD_25D_SHADER).add(r.getDecal());
-		}
-		gfx25D.get(STANDARD_25D_SHADER).flush();
-		gfxBuffer25D.clear();
-	}
-	*/
 	
 	/**
 	 * Register a RenderableProvider for rendering.
@@ -317,12 +312,13 @@ public final class Renderer implements ViewportResizable, Disposable {
 			gfxBuffer3D.add((VoxarRenderableProvider3D)provider);
 		if(provider instanceof VoxarRenderableProvider2D)
 			gfxBuffer2D.add((VoxarRenderableProvider2D)provider);
+		if(provider instanceof VoxarRenderableProvider25D)
+			gfxBuffer25D.add((VoxarRenderableProvider25D)provider);
 	}
 
 	@Override
 	public void windowResizeCallback(int nw, int nh) {
-		for(Map.Entry<Long, SpriteBatch> entry : gfx2D.entrySet())
-			entry.getValue().getProjectionMatrix().setToOrtho2D(0, 0, nw, nh);
+		gfx2D.getProjectionMatrix().setToOrtho2D(0, 0, nw, nh);
 		for(VoxarRenderableProvider3D p : gfxBuffer3D)
 			p.windowResizeCallback(nw, nh);
 		for(VoxarRenderableProvider2D p : gfxBuffer2D)
@@ -336,27 +332,20 @@ public final class Renderer implements ViewportResizable, Disposable {
 	}
 	
 	public void resetCameraGroupStrategy() {
-		gfx25D.get(STANDARD_25D_SHADER).setGroupStrategy(null);
+		gfx25D.setGroupStrategy(null);
 	}
 
 	@Override
 	public void dispose() {
-		
 		// Dispose of batches.
-		for(Map.Entry<Long, ModelBatch> entry : gfx3D.entrySet()) 
-			entry.getValue().dispose();
-		for(Map.Entry<Long, DecalBatch> entry : gfx25D.entrySet()) {
-			if(entry.getValue() != null)
-				entry.getValue().dispose();
-		}
-		for(Map.Entry<Long, SpriteBatch> entry : gfx2D.entrySet())
-			entry.getValue().dispose();
-		
+		gfx3D.dispose();
+		if(gfx25D != null) 
+			gfx25D.dispose();
+		gfx2D.dispose();
 		// Dispose of ImGui resources
 		DI_GLFW.dispose();
 		DI_GL3.dispose();
 		ImGui.destroyContext();
-
 	}
 
 }

@@ -19,12 +19,12 @@ public final class Crosshair extends VoxarRenderableProvider2D {
 	
 	public Crosshair() {
 		renderable = new Raster2(Gdx.files.internal("img/crosshair.png"));
-		update();
+		update(Renderer.WINDOW_WIDTH, Renderer.WINDOW_HEIGHT);
 		registerInstance(renderable);
 	}
 	
-	private void update() {
-		renderable.setPosition(new Vector2((Renderer.WINDOW_WIDTH / 2) - (width / 2), (Renderer.WINDOW_HEIGHT / 2) - (height / 2)));
+	private void update(int w, int h) {
+		renderable.setPosition(new Vector2((w / 2) - (width / 2), (h / 2) - (height / 2)));
 		renderable.setDimensions(new Vector2(width, height));
 	}
 	
@@ -35,12 +35,12 @@ public final class Crosshair extends VoxarRenderableProvider2D {
 	public void setDimensions(Vector2 dim) {
 		width = (int)dim.x;
 		height = (int)dim.y;
-		update();
+		update(Renderer.WINDOW_WIDTH, Renderer.WINDOW_HEIGHT);
 	}
 	
 	@Override
 	public void windowResizeCallback(int nw, int nh) {
-		update();
+		update(nw, nh);
 	}
 
 	@Override

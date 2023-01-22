@@ -10,7 +10,7 @@ Voxar's features will be outlined below. Please keep in mind this README is unde
 
     *... [UNDER CONSTRUCTION] ...*
 
-#### > Voxar is easy to learn right out of the box.
+#### > Voxar is easy to learn.
 
     *... [UNDER CONSTRUCTION] ...*
 

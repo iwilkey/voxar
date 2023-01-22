@@ -8,11 +8,11 @@ import com.badlogic.gdx.utils.Array;
  */
 public abstract class VoxarRenderableProvider2D extends VoxarRenderableProvider {
 	
-	private Array<Raster2> renderableTextures;
+	private Array<Raster2> renderableRaster2;
 	
 	public VoxarRenderableProvider2D() {
 		super(Renderer.STANDARD_2D_SHADER);
-		renderableTextures = new Array<>();
+		renderableRaster2 = new Array<>();
 		Renderer.register(this);
 	}
 	
@@ -21,21 +21,21 @@ public abstract class VoxarRenderableProvider2D extends VoxarRenderableProvider 
 	 * @param instance
 	 */
 	public void registerInstance(Raster2 instance) {
-		renderableTextures.add(instance);
+		renderableRaster2.add(instance);
 	}
 	
 	/**
 	 * Remove a texture instance from being rendered.
 	 */
 	public void abortInstance() {
-		renderableTextures.removeValue(null, false);
+		renderableRaster2.removeValue(null, false);
 	}
 	
 	/**
 	 * @return the registered texture regions to be rendered text frame.
 	 */
 	public Array<Raster2> getRegisteredRaster2s() {
-		return renderableTextures;
+		return renderableRaster2;
 	}
 	
 }
