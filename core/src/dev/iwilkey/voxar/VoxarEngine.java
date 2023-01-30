@@ -7,6 +7,7 @@ import java.util.Random;
 
 import com.badlogic.gdx.ApplicationAdapter;
 
+import dev.iwilkey.voxar.asset.VoxarAssetManager;
 import dev.iwilkey.voxar.gfx.Renderer;
 import dev.iwilkey.voxar.gfx.ViewportResizable;
 import dev.iwilkey.voxar.utils.TaskManager;
@@ -20,13 +21,13 @@ public final class VoxarEngine<T> extends ApplicationAdapter {
 	public static final String GIT_VERSION = "master-p1";
 	public static final String ENGINE_VERSION = "0.01";
 	
-	private Renderer renderer;
-	private VoxarAssetManager assetManager;
-	private VoxarEngineInterface engineInterface;
+	private static Renderer renderer;
+	private VoxarAssetManager<T> assetManager;
+	private VoxarEngineInterface<T> engineInterface;
 	private HashMap<Long, TaskManager<T>> tasks;
 	private Iterator<Entry<Long, TaskManager<T>>> taskIterator;
 	
-	public VoxarEngine(VoxarEngineInterface entryState) {
+	public VoxarEngine(VoxarEngineInterface<T> entryState) {
 		renderer = null;
 		assetManager = null;
 		engineInterface = null;
@@ -38,10 +39,10 @@ public final class VoxarEngine<T> extends ApplicationAdapter {
 	@Override
 	public void create() {
 		renderer = new Renderer(this);
-		assetManager = new VoxarAssetManager();
+		assetManager = new VoxarAssetManager<T>();
 		tasks = new HashMap<>();
 		taskIterator = tasks.entrySet().iterator();
-		setInterface(engineInterface);
+		setInterface(engineInterface, true);
 	}
 	
 	protected void tasks() {
@@ -70,12 +71,15 @@ public final class VoxarEngine<T> extends ApplicationAdapter {
 		renderer.onViewportResize(width, height);
 	}
 	
-	public void setInterface(VoxarEngineInterface interf) {
-		if(interf != null)
+	public void setInterface(VoxarEngineInterface<T> interf, boolean entry) {
+		if(interf != null && !entry)
 			interf.end();
+		assetManager.releaseAll();
 		this.engineInterface = interf;
-		if(this.engineInterface != null)
+		if(this.engineInterface != null) {
+			this.engineInterface.setEngine(this);
 			this.engineInterface.begin();
+		}
 	}
 	
 	public long registerTaskManager(TaskManager<T> manager) {
@@ -88,15 +92,15 @@ public final class VoxarEngine<T> extends ApplicationAdapter {
 		}
 	}
 	
-	public Renderer getRenderer() {
-		return renderer;
-	}
-	
-	public VoxarEngineInterface getCurrentInterface() {
+	public VoxarEngineInterface<T> getCurrentInterface() {
 		return engineInterface;
 	}
 	
-	public VoxarAssetManager getAssetManager() {
+	public static Renderer getRenderer() {
+		return renderer;
+	}
+
+	public VoxarAssetManager<T> getAssetManager() {
 		return assetManager;
 	}
 	
