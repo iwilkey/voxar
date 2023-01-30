@@ -15,16 +15,10 @@ public class VoxarApplicationConfiguration extends Lwjgl3ApplicationConfiguratio
 	public static final float DEFAULT_SCREEN_WIDTH_RATIO = 0.50f;
 	public static final float DEFAULT_ASPECT_RATIO = (16 / 9.0f);
 
-	/**
-	 * Voxar application configuration.
-	 * @param appName the name of the Voxar engine implementation.
-	 */
 	public VoxarApplicationConfiguration(String appName, boolean fullscreen) {
-		
 		this.setTitle(appName);
 		this.setForegroundFPS(120);
 		DisplayMode display = Lwjgl3ApplicationConfiguration.getDisplayMode();
-		
 		if(fullscreen) 
 			this.setFullscreenMode(display);
 		else {
