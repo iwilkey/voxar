@@ -3,12 +3,19 @@ package dev.iwilkey.voxar.asset;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.utils.Disposable;
 
 /**
  * A wrapping of libGDX's AssetManager. Efficiently manages assets during runtime.
  * @author iwilkey
  */
-public final class VoxarAssetManager<T> extends AssetManager {
+public final class VoxarAssetManager<T> implements Disposable {
+	
+	private AssetManager manager;
+	
+	public VoxarAssetManager() {
+		manager = new AssetManager();
+	}
 	
 	/**
 	 * Register an asset for use during some portion of Voxar runtime.
@@ -20,7 +27,7 @@ public final class VoxarAssetManager<T> extends AssetManager {
 			System.out.println("You are trying to register an asset of invalid path: \"" + path + "\"");
 			Gdx.app.exit();
 		}
-		if(isLoaded(path)) {
+		if(manager.isLoaded(path)) {
 			System.out.println("You are trying to regsiter an asset that is already loaded: \"" + path + "\"");
 			return;
 		}	
@@ -31,7 +38,7 @@ public final class VoxarAssetManager<T> extends AssetManager {
 				
 				break;
 			case TEXTURE:
-				load(path, Texture.class);
+				manager.load(path, Texture.class);
 				break;
 			default:;
 		}
@@ -43,11 +50,11 @@ public final class VoxarAssetManager<T> extends AssetManager {
 	 * @return the asset.
 	 */
 	public T retrieve(String path) {
-		if(!isLoaded(path)) {
+		if(!manager.isLoaded(path)) {
 			System.out.println("You are trying to retrieve an asset that is not loaded: \"" + path + "\"");
 			Gdx.app.exit();
 		}
-		return get(path);
+		return manager.get(path);
 	}
 	
 	/**
@@ -55,18 +62,23 @@ public final class VoxarAssetManager<T> extends AssetManager {
 	 * @param path the path to the loaded asset, relative to the "./assets/" directory.
 	 */
 	public void release(String path) {
-		if(!isLoaded(path)) {
+		if(!manager.isLoaded(path)) {
 			System.out.println("You are trying to release an asset that is not loaded: \"" + path + "\"");
 			return;
 		}
-		unload(path);
+		manager.unload(path);
 	}
 	
 	/**
 	 * Release all loaded assets from memory. Called automatically when the VoxarEngine is instructed to switch interfaces.
 	 */
 	public void releaseAll() {
-		clear();
+		manager.clear();
+	}
+
+	@Override
+	public void dispose() {
+		manager.dispose();
 	}
 	
 }

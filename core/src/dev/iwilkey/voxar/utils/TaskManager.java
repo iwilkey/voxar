@@ -10,8 +10,9 @@ import com.badlogic.gdx.utils.Disposable;
 import dev.iwilkey.voxar.VoxarEngine;
 
 /**
+ * Manages a mapping of active {@link Task}s.
  * @author iwilkey
- * @param <T> the type being registered.
+ * @param <T> the task type registered.
  */
 @SuppressWarnings("unchecked")
 public abstract class TaskManager<T> implements Disposable {
@@ -27,6 +28,11 @@ public abstract class TaskManager<T> implements Disposable {
 		registerIterator = register.entrySet().iterator();
 	}
 	
+	/**
+	 * Register a new {@link Task} 
+	 * @param obj
+	 * @return
+	 */
 	public long register(Task<T> obj) {
 		long uid = getUniqueIdentifier();
 		register.put(uid, obj);
